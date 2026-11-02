@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { DEFAULT_LOCALE, splitLocalePath } from '@mtpk/content-kit/i18n';
 import type { PageListItem, RedirectDto } from '@mtpk/shared/contracts';
 
 const CONTENT = process.env.CONTENT_URL ?? 'http://127.0.0.1:4101';
@@ -72,6 +73,8 @@ function thanksAllowed(req: NextRequest): boolean {
  *  3. /sitemap.xml → /sitemap-index.xml;
  *  4. адрес без слеша на конце → со слешем, если такая страница есть;
  *  (после легаси-карты) адрес в другом регистре → страница в нижнем.
+ * Языки: страницы живут под /ru/, /kz/, /en/; адрес без языка — на русскую версию (как на прежнем .kz),
+ * легаси-карта и список страниц — по пути без языка.
  */
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -82,26 +85,40 @@ export async function proxy(req: NextRequest) {
     /* битая кодировка — сравниваем как есть */
   }
 
-  // «Спасибо» без заявки (адрес набран, закладка, бот) — обычная страница «не найдена» с кодом 404
-  if (pathname === '/spasibo/' && !thanksAllowed(req)) return NextResponse.rewrite(new URL('/404', req.url), { status: 404 });
-
-  const s = await getState();
-  const legacy = s?.redirects.get(decoded);
-  if (legacy) return redirect(legacy.to, req, legacy.code);
-
-  // адрес в другом регистре (/KONTAKTY/) — на страницу в нижнем: иначе у поисковиков дубль
-  const lower = decoded.toLowerCase();
-  if (lower !== decoded && s) {
-    const target = s.paths.has(lower) ? lower : s.paths.has(`${lower}/`) ? `${lower}/` : null;
-    if (target) return redirect(`${encodeURI(target)}${search}`, req);
-  }
-
   const index = pathname.match(/^(.*\/)index\.html$/);
   if (index) return redirect(`${index[1]}${search}`, req);
 
   if (pathname === '/sitemap.xml') return redirect(`${SITE}/sitemap-index.xml`, req);
 
-  if (!pathname.endsWith('/') && !/\.[a-z0-9]+$/i.test(pathname) && s?.paths.has(`${decoded}/`)) {
+  const isFile = /\.[a-z0-9]+$/i.test(pathname);
+  const { locale, path } = splitLocalePath(decoded);
+  const s = await getState();
+
+  if (!locale) {
+    if (isFile) return NextResponse.next();
+    const known = s?.redirects.get(decoded);
+    const target = known ? known.to : decoded.endsWith('/') ? decoded : `${decoded}/`;
+    return redirect(target.startsWith('http') ? target : `/${DEFAULT_LOCALE}${encodeURI(target)}${search}`, req, known?.code ?? 301);
+  }
+  const prefix = `/${locale}`;
+
+  // /kz → /kz/
+  if (decoded === prefix) return redirect(`${prefix}/${search}`, req);
+
+  // «Спасибо» без заявки (адрес набран, закладка, бот) — обычная страница «не найдена» с кодом 404
+  if (path === '/spasibo/' && !thanksAllowed(req)) return NextResponse.rewrite(new URL('/404', req.url), { status: 404 });
+
+  const legacy = s?.redirects.get(path);
+  if (legacy) return redirect(legacy.to.startsWith('http') ? legacy.to : `${prefix}${legacy.to}`, req, legacy.code);
+
+  // адрес в другом регистре (/KONTAKTY/) — на страницу в нижнем: иначе у поисковиков дубль
+  const lower = path.toLowerCase();
+  if (lower !== path && s) {
+    const target = s.paths.has(lower) ? lower : s.paths.has(`${lower}/`) ? `${lower}/` : null;
+    if (target) return redirect(`${prefix}${encodeURI(target)}${search}`, req);
+  }
+
+  if (!pathname.endsWith('/') && !isFile && s?.paths.has(`${path}/`)) {
     return redirect(`${pathname}/${search}`, req);
   }
   return NextResponse.next();

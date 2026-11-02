@@ -66,6 +66,12 @@ export async function publicRoutes(base: FastifyInstance, { store, db }: Deps) {
     store.siteData(),
   );
   app.get('/v1/redirects', { schema: { tags: ['Редиректы'], summary: 'Все редиректы' } }, async () => store.listRedirects());
+  // словарь большой, но запрашивается редко: сайт держит его в памяти (apps/web/src/lib/content.ts)
+  app.get(
+    '/v1/translations/:locale',
+    { schema: { tags: ['Сайт'], summary: 'Словарь языка: русская строка → перевод', params: z.object({ locale: z.enum(['kz', 'en']) }) } },
+    async (req) => Object.fromEntries((await db.translation.findMany({ where: { locale: req.params.locale }, select: { source: true, target: true } })).map((t) => [t.source, t.target])),
+  );
 
   // Совместимые адреса старой статики: /data/*.json и вынесенные стили.
   const nocache = { 'Cache-Control': 'no-cache, must-revalidate' };

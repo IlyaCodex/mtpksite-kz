@@ -1,3 +1,4 @@
+import type { Locale } from '@mtpk/content-kit/i18n';
 import { walkBlocks, type ActiveHoliday, type Block, type SiteSettings } from '@mtpk/content-model';
 import type { SiteDataDto } from '@mtpk/shared/contracts';
 import type { HeadPage } from '@/components/SiteHead';
@@ -9,6 +10,7 @@ import { versioned } from './versions';
  * в конце <body>. В браузер они не передаются — страница уходит чистым HTML.
  */
 export interface DocumentProps {
+  locale: Locale;
   head: HeadPage;
   home: boolean;
   /** клиентские модули страницы (адреса собранных файлов) */

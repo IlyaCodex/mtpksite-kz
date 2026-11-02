@@ -1,5 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import { heroPreload } from '@mtpk/content-kit/hero-css';
+import { localizeJsonLd, splitLocalePath, translateText } from '@mtpk/content-kit/i18n';
 import { activeNavFor } from '@mtpk/content-kit/page-meta';
 import { activeHoliday, nextHolidayChange, type Block } from '@mtpk/content-model';
 import { Blocks, buildRenderContext, holidayImageHints, preloadHints } from '@mtpk/ui';
@@ -8,11 +9,11 @@ import { Viewport } from '@/components/Viewport';
 import { Drawer } from '@/components/layout/Drawer';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
-import { getHolidays, getPage, getSettings, getSiteData } from '@/lib/content';
+import { getDictionary, getHolidays, getPage, getSettings, getSiteData } from '@/lib/content';
 import { heroImage } from '@/lib/hero';
 import { legacyScripts, pageModules, type SitePageProps } from '@/lib/page-props';
 import { pageOgImage } from '@/lib/seo';
-import { slugToPath } from '@/lib/site';
+import { SITE, slugToPath } from '@/lib/site';
 
 /** Страница уходит в браузер чистым HTML: без React-рантайма и без копии данных. */
 export const config = { unstable_runtimeJS: false };
@@ -22,9 +23,11 @@ export const config = { unstable_runtimeJS: false };
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
 
 export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) => {
-  const path = slugToPath(params?.slug as string[] | undefined);
+  // адрес — /язык/путь/: содержимое в базе одно, по пути без языка (адреса без языка уводит на /ru/ src/proxy.ts)
+  const { locale, path } = splitLocalePath(slugToPath(params?.slug as string[] | undefined));
+  if (!locale) return { notFound: true, revalidate: 60 };
   const home = path === '/';
-  const [page, settings, site, holidays] = await Promise.all([getPage(path), getSettings(), getSiteData(), home ? getHolidays() : null]);
+  const [page, settings, site, holidays, dict] = await Promise.all([getPage(path), getSettings(), getSiteData(), home ? getHolidays() : null, getDictionary(locale)]);
   if (!page || page.kind !== 'page') return { notFound: true, revalidate: 60 };
   const blocks = page.blocks as Block[];
   // главная в дни праздника — праздничная обложка (раздел «Праздники»): баннер предзагружается вместо фото обложки
@@ -38,6 +41,7 @@ export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) 
   const revalidate = change ? Math.min(3600, Math.max(15, Math.ceil((change - now) / 1000) + 5)) : 3600;
   return {
     props: {
+      locale,
       path,
       blocks,
       settings,
@@ -46,9 +50,10 @@ export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) 
       home,
       holiday,
       head: {
+        locale,
         path: page.path,
-        title: page.title,
-        description: page.description,
+        title: translateText(page.title, dict),
+        description: page.description && translateText(page.description, dict),
         noindex: page.noindex,
         preloadImage: hero ? null : (preload?.href ?? page.preloadImage),
         preloadHero: hero ? heroPreload(hero) : null,
@@ -56,7 +61,7 @@ export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) 
         ogImage: home ? null : pageOgImage(page.jsonLd, hero),
         preloadSrcSet: preload?.srcSet ?? null,
         preloadSizes: preload?.sizes ?? null,
-        jsonLd: page.jsonLd,
+        jsonLd: page.jsonLd.map((json) => localizeJsonLd(json, locale, dict, SITE)),
         cssTemplates: page.cssTemplates,
         externalStyles: page.externalStyles,
         inlineStyles: page.inlineStyles,

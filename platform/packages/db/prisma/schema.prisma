@@ -208,6 +208,25 @@ model ScriptBlock {
   @@schema("content")
 }
 
+/// Словарь переводов (сайт на языках ru, kz, en; content-kit/i18n.ts): русская строка → перевод.
+/// Ключ — хеш строки: длинный текст не помещается в индекс.
+model Translation {
+  /// kz | en
+  locale    String
+  /// SHA-1 строки source
+  hash      String
+  /// русская строка (normalizeText)
+  source    String
+  target    String
+  /// live — с прежнего сайта uralinduktor.kz; machine — машинный перевод; manual — правка в админке
+  origin    String   @default("live")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@id([locale, hash])
+  @@map("translations")
+  @@schema("content")
+}
+
 /// 301-редиректы (наследие WordPress и добавленные вручную).
 model Redirect {
   id        Int      @id @default(autoincrement())

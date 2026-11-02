@@ -1,4 +1,5 @@
 import { compareWalkOrder } from '@mtpk/content-kit/compare';
+import { DEFAULT_LOCALE, LANG_CODE, LOCALES } from '@mtpk/content-kit/i18n';
 import { inSitemap, sitemapRules } from '@mtpk/content-kit/page-meta';
 import { listPages } from './content';
 import { SITE } from './site';
@@ -11,19 +12,20 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /**
  * Карта сайта: индекс sitemap-index.xml и один файл sitemap-0.xml, lastmod из истории
  * правок (SEO-T6), priority/changefreq по типу страницы, без служебных и noindex.
- * Статьи Практикума — в конце списка.
+ * Каждая страница — на трёх языках, со ссылками на другие языки (hreflang).
  */
 export async function buildSitemap(): Promise<string> {
-  const all = await listPages();
-  const pages = all
+  const pages = (await listPages())
     .filter((p) => p.kind === 'page' && !p.noindex && inSitemap(p.path))
     .sort((a, b) => compareWalkOrder(a.path, b.path));
-  const praktikum = all
-    .filter((p) => p.kind === 'document' && p.path.endsWith('/') && !p.noindex)
-    .sort((a, b) => (a.path < b.path ? -1 : 1));
-  const urls = [...pages, ...praktikum].map((p) => {
+  const urls = pages.flatMap((p) => {
     const { priority, changefreq } = sitemapRules(p.path);
-    return `<url><loc>${esc(SITE + p.path)}</loc><lastmod>${p.lastmodAt}</lastmod><changefreq>${changefreq}</changefreq><priority>${priority.toFixed(1)}</priority></url>`;
+    const links = LOCALES.map((l) => `<xhtml:link rel="alternate" hreflang="${LANG_CODE[l]}" href="${esc(`${SITE}/${l}${p.path}`)}"/>`).join('');
+    const fallback = `<xhtml:link rel="alternate" hreflang="x-default" href="${esc(`${SITE}/${DEFAULT_LOCALE}${p.path}`)}"/>`;
+    return LOCALES.map(
+      (l) =>
+        `<url><loc>${esc(`${SITE}/${l}${p.path}`)}</loc>${links}${fallback}<lastmod>${p.lastmodAt}</lastmod><changefreq>${changefreq}</changefreq><priority>${priority.toFixed(1)}</priority></url>`,
+    );
   });
   return `${URLSET_OPEN}${urls.join('')}</urlset>`;
 }

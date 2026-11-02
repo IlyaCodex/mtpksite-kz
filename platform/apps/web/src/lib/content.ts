@@ -1,3 +1,4 @@
+import type { Dictionary, Locale } from '@mtpk/content-kit/i18n';
 import { DEFAULT_SETTINGS, type HolidaySettings, type SiteSettings } from '@mtpk/content-model';
 import type { PageDto, PageListItem, RedirectDto, SiteDataDto } from '@mtpk/shared/contracts';
 
@@ -16,6 +17,22 @@ async function getJson<T>(path: string): Promise<T | null> {
 }
 
 export const getPage = (path: string) => getJson<PageDto>(`/v1/pages/by-path?path=${encodeURIComponent(path)}`);
+
+/** Словари языков — в памяти процесса: большие, а нужны при генерации каждой страницы. Правка перевода сбрасывает их (/api/revalidate). */
+const DICTIONARY_TTL_MS = 5 * 60_000;
+const NO_TRANSLATION: Dictionary = new Map();
+const dictionaries = new Map<Locale, { at: number; dict: Dictionary }>();
+
+export async function getDictionary(locale: Locale): Promise<Dictionary> {
+  if (locale === 'ru') return NO_TRANSLATION;
+  const known = dictionaries.get(locale);
+  if (known && Date.now() - known.at < DICTIONARY_TTL_MS) return known.dict;
+  const dict = new Map(Object.entries((await getJson<Record<string, string>>(`/v1/translations/${locale}`)) ?? {}));
+  dictionaries.set(locale, { at: Date.now(), dict });
+  return dict;
+}
+
+export const resetDictionaries = () => dictionaries.clear();
 
 export async function listPages(): Promise<PageListItem[]> {
   return (await getJson<PageListItem[]>('/v1/pages')) ?? [];

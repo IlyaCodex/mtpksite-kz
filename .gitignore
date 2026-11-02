@@ -67,3 +67,4 @@ id_ed25519*
 # Копия живого uralinduktor.kz (исходник переводов, скрипт platform/scripts/kz/crawl-live.ts)
 exports/kz-live/
 exports/*.dump
+exports/kz-missing.json

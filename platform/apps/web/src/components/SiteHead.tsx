@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, LANG_CODE, LOCALES, OG_LOCALE, type Locale } from '@mtpk/content-kit/i18n';
 import type { PageDto } from '@mtpk/shared/contracts';
 import { HEADER_LOGO, logoPreload } from '@/components/layout/Logo';
 import { clientModuleUrl, templateCssUrl } from '@/lib/assets';
@@ -10,6 +11,7 @@ export type HeadPage = Pick<
   PageDto,
   'path' | 'title' | 'description' | 'noindex' | 'preloadImage' | 'jsonLd' | 'cssTemplates' | 'externalStyles' | 'inlineStyles'
 > & {
+  locale: Locale;
   /** srcset/sizes предзагружаемой картинки — те же, что у неё на странице */
   preloadSrcSet?: string | null;
   preloadSizes?: string | null;
@@ -53,7 +55,7 @@ export function CoreAssets({ modules = [] }: { modules?: string[] }) {
  * и компоненты (core-end.css).
  */
 export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage; home?: boolean; modules?: string[] }) {
-  const canonical = `${SITE}${page.path}`;
+  const canonical = `${SITE}/${page.locale}${page.path}`;
   const ogDescription = page.description ?? DEFAULT_DESCRIPTION;
   const image = page.ogImage ?? `${SITE}${DEFAULT_OG_IMAGE}`;
   const coreEnd = clientModuleUrl('core-end.css');
@@ -64,6 +66,10 @@ export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage;
       <title>{page.title}</title>
       {page.description && <meta name="description" content={page.description} />}
       <link rel="canonical" href={canonical} />
+      {LOCALES.map((l) => (
+        <link key={l} rel="alternate" hrefLang={LANG_CODE[l]} href={`${SITE}/${l}${page.path}`} />
+      ))}
+      <link rel="alternate" hrefLang="x-default" href={`${SITE}/${DEFAULT_LOCALE}${page.path}`} />
       {page.noindex && <meta name="robots" content="noindex, follow" />}
       {/* Google Search Console и Яндекс.Вебмастер */}
       <meta name="google-site-verification" content="klj1lj9utoieH9ZljmhDYykW6XSM3G7dtdVklWGJQw4" />
@@ -72,7 +78,7 @@ export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage;
       <meta property="og:description" content={ogDescription} />
       <meta property="og:url" content={canonical} />
       <meta property="og:site_name" content="УралИндуктор · МТПК" />
-      <meta property="og:locale" content="ru_RU" />
+      <meta property="og:locale" content={OG_LOCALE[page.locale]} />
       <meta property="og:image" content={image} />
       {/* размеры известны только у общей картинки; у фото страницы их возьмёт сам мессенджер */}
       {!page.ogImage && <meta property="og:image:width" content="1200" />}

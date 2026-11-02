@@ -1,4 +1,5 @@
 import type { GetStaticProps } from 'next';
+import { DEFAULT_LOCALE } from '@mtpk/content-kit/i18n';
 import type { SiteSettings } from '@mtpk/content-model';
 import { CookieConsent } from '@/components/CookieConsent';
 import { Viewport } from '@/components/Viewport';
@@ -19,9 +20,11 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   return {
     props: {
       settings,
+      locale: DEFAULT_LOCALE,
       home: false,
       head: {
         ...NOT_FOUND_PAGE,
+        locale: DEFAULT_LOCALE,
         preloadImage: null,
         jsonLd: [],
         cssTemplates: [],

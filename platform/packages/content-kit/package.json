@@ -21,7 +21,8 @@
     "./stock": "./src/stock.ts",
     "./doc-edit": "./src/doc-edit.ts",
     "./hidden-links": "./src/hidden-links.ts",
-    "./hero-css": "./src/hero-css.ts"
+    "./hero-css": "./src/hero-css.ts",
+    "./i18n": "./src/i18n.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
