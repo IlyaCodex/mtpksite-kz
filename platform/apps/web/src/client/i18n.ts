@@ -96,6 +96,8 @@ export function initI18n(): void {
     document.documentElement.dataset.locale = locale;
     for (const a of document.querySelectorAll('a[href^="/ru"]')) a.setAttribute('href', (a.getAttribute('href') ?? '').replace(/^\/ru(?=\/|$)/, `/${locale}`));
     translate(document.body);
+    const title = document.querySelector('title');
+    if (title) translate(title);
   }
 
   new MutationObserver((records) => {

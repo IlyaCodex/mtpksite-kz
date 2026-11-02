@@ -671,8 +671,14 @@ async function cleanup(): Promise<void> {
     let next = raw.replace(/<p>(?:(?!<\/p>).)*?\/praktikum\/(?:(?!<\/p>).)*?<\/p>/g, '');
     if (next.includes('/praktikum')) throw new Error(`ссылка на Практикум осталась: страница ${page.path}`);
     next = next
-      .replaceAll('/proekty/pavlodar/', PAVLODAR)
-      .replaceAll('/proekty/rybinsk/', `/proekty/${RYBINSK}/`)
+      // адреса страниц, не файлов: фото этих кейсов лежат в /img/proekty/pavlodar/
+      .replace(/\/(img|files)\/proekty\/postavka-ui-1t-800kw-uig-80t-pavlodar\//g, '/$1/proekty/pavlodar/')
+      .replace(/\/(img|files)\/proekty\/postavka-drobemetnoy-ustanovki-uid-3210-rybinsk\//g, '/$1/proekty/rybinsk/')
+      .replace(/(?<!\/(?:img|files))\/proekty\/pavlodar\//g, PAVLODAR)
+      .replace(/(?<!\/(?:img|files))\/proekty\/rybinsk\//g, `/proekty/${RYBINSK}/`)
+      // заголовок «Наличия»: одним куском, иначе в переводе «на складе» повторяется
+      .replace('<em>в&nbsp;наличии</em> на&nbsp;складе', '<em>в&nbsp;наличии на&nbsp;складе</em>')
+      .replace('<em>в наличии</em> на складе', '<em>в наличии на складе</em>')
       .replace(/\/proekty\/[a-z-]+\/(?=\\?")/g, (href) => (cities.has(href) || MAIN_CITY.test(href) ? '/proekty/' : href));
     if (next !== raw) await db.page.update({ where: { id: page.id }, data: { blocks: JSON.parse(next) as object } });
   }

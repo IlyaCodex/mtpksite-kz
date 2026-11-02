@@ -10,11 +10,14 @@ import ts from 'typescript';
 import { htmlTexts } from '@mtpk/content-kit/i18n';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-const DIRS = ['apps/web/src/client', 'apps/web/src/legacy', 'apps/web/src/components/layout', 'packages/ui/src/forms'];
+const DIRS = ['apps/web/src/client', 'apps/web/src/legacy', 'apps/web/src/components', 'packages/ui/src/forms'];
+/** Страница 404: одна на все языки, её целиком переводит браузер. */
+const FILES = ['apps/web/src/pages/404.tsx'];
 /** Только для тех, кто вошёл в админку; статьи Практикума (на этом сайте их нет); данные карты — свой файл на каждый язык. */
 const SKIP = /(?:admin-bar|doc-bar|thermal-guide|inductor-guide|made-badges|projects-data|cases-data|LangSwitch|globals\.d)\b/;
 /** Строки, склеенные скриптом из частей, ответы сервиса заявок; {n} — число (client/i18n.ts). */
 const EXTRA = [
+  'Страница не найдена — УралИндуктор',
   'Браузер не поддерживает защищённую отправку. Позвоните: +7 (775) 853-40-95',
   'Не удалось отправить. Позвоните: +7 (775) 853-40-95',
   'Не удалось получить подтверждение отправки. Данные сохранены в форме — попробуйте ещё раз. Позвоните: +7 (775) 853-40-95',
@@ -44,20 +47,21 @@ const EXTRA = [
 const CYRILLIC = /[А-Яа-яЁё]/;
 
 const literals = new Set<string>();
-for (const dir of DIRS) {
-  for (const name of fs.readdirSync(path.join(ROOT, dir), { recursive: true }) as string[]) {
-    if (!/\.tsx?$/.test(name) || name.endsWith('.test.ts') || SKIP.test(name)) continue;
-    const file = path.join(ROOT, dir, name);
-    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
-    const walk = (node: ts.Node) => {
-      if (ts.isStringLiteralLike(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node)) {
-        if (CYRILLIC.test(node.text)) literals.add(node.text);
-      }
-      if (ts.isJsxText(node) && CYRILLIC.test(node.text)) literals.add(node.text);
-      ts.forEachChild(node, walk);
-    };
-    walk(source);
-  }
+const sourceFiles = [
+  ...FILES,
+  ...DIRS.flatMap((dir) => (fs.readdirSync(path.join(ROOT, dir), { recursive: true }) as string[]).map((name) => path.join(dir, name))),
+];
+for (const name of sourceFiles) {
+  if (!/\.tsx?$/.test(name) || name.endsWith('.test.ts') || SKIP.test(name)) continue;
+  const file = path.join(ROOT, name);
+  const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+  const walk = (node: ts.Node) => {
+    if (ts.isStringLiteralLike(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node) || ts.isJsxText(node)) {
+      if (CYRILLIC.test(node.text)) literals.add(node.text);
+    }
+    ts.forEachChild(node, walk);
+  };
+  walk(source);
 }
 
 /** Литерал — обычный текст или кусок разметки: в словарь идут его тексты и подписи (alt, title, aria-label…). */
