@@ -168,7 +168,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   contacts: {
     phones: [{ href: 'tel:+77758534095', text: '+7 (775) 853-40-95', label: 'Позвонить', local: false }],
     email: 'stasgross.ru@gmail.com',
-    telegram: 'https://t.me/uralinduktor',
     instagram: 'https://www.instagram.com/reel/DNF-x6zsaDt/?igsh=MWJsZjZmbmM5ZzRhOA==',
     tiktok: 'https://www.tiktok.com/@stas_gross?_r=1&_t=ZS-98IOPsrMYDw',
   },

@@ -12,7 +12,7 @@ import fs from 'node:fs';
 
 const args = new Map(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=') as [string, string]));
 const SITE = (args.get('site') ?? 'http://127.0.0.1:3200').replace(/\/$/, '');
-const DOMAIN = 'https://uralinduktor.ru';
+const DOMAIN = 'https://uralinduktor.kz';
 const EXAMPLES = Number(args.get('examples') ?? 5);
 
 type Issue = { level: 'ошибка' | 'замечание'; code: string; text: string; path: string; detail?: string };

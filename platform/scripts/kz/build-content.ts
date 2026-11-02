@@ -614,7 +614,6 @@ async function buildSettings(): Promise<void> {
   next.contacts = {
     phones: [{ href: 'tel:+77758534095', text: '+7 (775) 853-40-95', label: 'Позвонить', local: false }],
     email: 'stasgross.ru@gmail.com',
-    telegram: 'https://t.me/uralinduktor',
     instagram: 'https://www.instagram.com/reel/DNF-x6zsaDt/?igsh=MWJsZjZmbmM5ZzRhOA==',
     tiktok: 'https://www.tiktok.com/@stas_gross?_r=1&_t=ZS-98IOPsrMYDw',
   };
@@ -644,6 +643,9 @@ function nearestPage(p: string, paths: Set<string>): string {
   return '/';
 }
 
+/** Страницы городов основного сайта (реестр /proekty/ там другой): их здесь нет. */
+const MAIN_CITY = /^\/proekty\/(?:ufa|lipetsk|magnitogorsk|chelyabinsk|ekaterinburg|chermoz|miass|perm|kurgan)\/$/;
+
 async function cleanup(): Promise<void> {
   // Практикума здесь нет; реестр проектов и кейсы — свои (страницы городов основного сайта убираем)
   const docs = await db.page.deleteMany({ where: { kind: 'document' } });
@@ -661,14 +663,18 @@ async function cleanup(): Promise<void> {
     await db.page.update({ where: { id: thanks.id }, data: { blocks: blocks as object } });
   }
 
-  // ссылки на Практикум в описаниях товаров
-  const pages = await db.page.findMany({ where: { kind: 'page' }, select: { id: true, blocks: true } });
+  // в описаниях товаров: ссылки на Практикум — убрать, на страницы городов основного сайта — на кейс или реестр
+  const cities = new Set(mainCities.map((p) => p.path));
+  const pages = await db.page.findMany({ where: { kind: 'page' }, select: { id: true, path: true, blocks: true } });
   for (const page of pages) {
     const raw = JSON.stringify(page.blocks);
-    if (!raw.includes('/praktikum')) continue;
-    const next = raw.replace(/<p>(?:(?!<\/p>).)*?\/praktikum\/(?:(?!<\/p>).)*?<\/p>/g, '');
-    if (next.includes('/praktikum')) throw new Error(`ссылка на Практикум осталась: страница ${page.id}`);
-    await db.page.update({ where: { id: page.id }, data: { blocks: JSON.parse(next) as object } });
+    let next = raw.replace(/<p>(?:(?!<\/p>).)*?\/praktikum\/(?:(?!<\/p>).)*?<\/p>/g, '');
+    if (next.includes('/praktikum')) throw new Error(`ссылка на Практикум осталась: страница ${page.path}`);
+    next = next
+      .replaceAll('/proekty/pavlodar/', PAVLODAR)
+      .replaceAll('/proekty/rybinsk/', `/proekty/${RYBINSK}/`)
+      .replace(/\/proekty\/[a-z-]+\/(?=\\?")/g, (href) => (cities.has(href) || MAIN_CITY.test(href) ? '/proekty/' : href));
+    if (next !== raw) await db.page.update({ where: { id: page.id }, data: { blocks: JSON.parse(next) as object } });
   }
 
   // адреса: со страниц живого сайта, которых нет здесь, и старые перенаправления — на существующие страницы
