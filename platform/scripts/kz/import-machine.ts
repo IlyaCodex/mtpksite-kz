@@ -23,16 +23,26 @@ const withoutCodes = (s: string) => s.replace(/[А-ЯЁA-Z]{2,}[-‑]?[\dА-ЯЁ
 
 const { db, close } = createDb(process.env.DATABASE_URL!, { max: 4, appName: 'kz-import-machine' });
 const stats = { ok: 0, absent: 0, numbers: 0, untranslated: 0 };
+/** Подписи переключателя языка не переводятся. */
+const NEVER = new Set(['РУС', 'ҚАЗ', 'ENG', 'Қазақша', 'Русский']);
 const problems: string[] = [];
 
 for (const file of fs.readdirSync(dir).filter((f) => /^(?:kz|en)-\d+\.out\.json$/.test(f)).sort()) {
   const locale = file.slice(0, 2);
   const sources = JSON.parse(fs.readFileSync(path.join(dir, file.replace('.out.', '.in.')), 'utf8')) as Record<string, string>;
-  const targets = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')) as Record<string, string>;
+  let targets: Record<string, string>;
+  try {
+    targets = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')) as Record<string, string>;
+  } catch (err) {
+    // файл ещё дописывается или испорчен: пачка останется на следующий запуск
+    problems.push(`${file}: не разбирается — ${(err as Error).message.slice(0, 120)}`);
+    continue;
+  }
   const rows: { locale: string; hash: string; source: string; target: string; origin: string }[] = [];
   for (const [id, raw] of Object.entries(sources)) {
     const source = normalizeText(raw);
     const target = normalizeText(targets[id] ?? '');
+    if (NEVER.has(source)) continue;
     if (!target) {
       stats.absent++;
       continue;

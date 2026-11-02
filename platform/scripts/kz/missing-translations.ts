@@ -70,6 +70,14 @@ function take(page: string, text: string) {
   totals.set(section(page), row);
 }
 
+/** Текстовые поля разметки JSON-LD: их переводит localizeJsonLd целой строкой. */
+function jsonLdTexts(value: unknown): string[] {
+  if (typeof value === 'string') return /^https?:/.test(value) ? [] : [normalizeText(value)];
+  if (Array.isArray(value)) return value.flatMap(jsonLdTexts);
+  if (value && typeof value === 'object') return Object.entries(value).flatMap(([k, v]) => (k.startsWith('@') ? [] : jsonLdTexts(v)));
+  return [];
+}
+
 async function worker() {
   for (let page = queue.shift(); page; page = queue.shift()) {
     const res = await fetch(`${SITE}/ru${page}`, { redirect: 'manual' });
@@ -83,6 +91,12 @@ async function worker() {
     if (title) take(page, normalizeText((title.childNodes as DefaultTreeAdapterMap['textNode'][]).map((c) => c.value).join('')));
     for (const c of (head?.childNodes ?? []) as Node[]) {
       if (isElement(c) && c.tagName === 'meta' && c.attrs.some((a) => a.name === 'description')) take(page, normalizeText(c.attrs.find((a) => a.name === 'content')?.value ?? ''));
+    }
+    for (const c of (head?.childNodes ?? []) as Node[]) {
+      if (isElement(c) && c.tagName === 'script' && c.attrs.some((x) => x.name === 'type' && x.value === 'application/ld+json')) {
+        const raw = (c.childNodes as DefaultTreeAdapterMap['textNode'][]).map((x) => x.value).join('');
+        jsonLdTexts(JSON.parse(raw)).forEach((text) => take(page, text));
+      }
     }
     const body = find(doc, 'body');
     if (body) for (const t of pageTexts(body.childNodes as Node[])) take(page, t.text);
