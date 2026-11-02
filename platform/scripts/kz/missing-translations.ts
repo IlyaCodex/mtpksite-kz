@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
-import { normalizeText, pageTexts } from '@mtpk/content-kit/i18n';
+import { headingKeys, normalizeText, pageTexts } from '@mtpk/content-kit/i18n';
 import { createDb } from '@mtpk/db';
 
 type Node = DefaultTreeAdapterMap['node'];
@@ -99,7 +99,10 @@ async function worker() {
       }
     }
     const body = find(doc, 'body');
-    if (body) for (const t of pageTexts(body.childNodes as Node[])) take(page, t.text);
+    if (body) {
+      for (const t of pageTexts(body.childNodes as Node[])) take(page, t.text);
+      for (const key of headingKeys(body.childNodes as Node[])) take(page, key);
+    }
   }
 }
 await Promise.all(Array.from({ length: WORKERS }, worker));

@@ -47,6 +47,12 @@ for (const file of fs.readdirSync(dir).filter((f) => /^(?:kz|en)-\d+\.out\.json$
       stats.absent++;
       continue;
     }
+    const tags = (s: string) => (s.match(/<\/?[a-z]+>/g) ?? []).sort().join(' ');
+    if (source.includes('<') && tags(source) !== tags(target)) {
+      stats.numbers++;
+      problems.push(`${file} #${id} теги: ${source} → ${target}`);
+      continue;
+    }
     if (numbers(source) !== numbers(target)) {
       stats.numbers++;
       problems.push(`${file} #${id} числа: ${source} → ${target}`);

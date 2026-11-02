@@ -27,14 +27,61 @@ const isText = (n: Node): n is TextNode => n.nodeName === '#text';
 const childrenOf = (n: Element): Node[] =>
   n.tagName === 'template' ? ((n as unknown as { content: { childNodes: Node[] } }).content.childNodes ?? []) : (n.childNodes as Node[]);
 
-function walk(nodes: Node[], visitText: (n: TextNode) => void, visitElement: (el: Element) => void): void {
+/** visitElement вернул false — внутрь элемента не заходим: он уже переведён целиком. */
+function walk(nodes: Node[], visitText: (n: TextNode) => void, visitElement: (el: Element) => boolean | void): void {
   for (const n of nodes) {
     if (isText(n)) visitText(n);
     else if (isElement(n) && !SKIP.has(n.tagName) && !n.attrs.some((a) => a.name === 'translate' && a.value === 'no')) {
-      visitElement(n);
-      walk(childrenOf(n), visitText, visitElement);
+      if (visitElement(n) !== false) walk(childrenOf(n), visitText, visitElement);
     }
   }
+}
+
+const HEADINGS = new Set(['h1', 'h2', 'h3', 'h4']);
+const INLINE = new Set(['em', 'strong', 'b', 'i', 'br']);
+
+/**
+ * Заголовок с выделением разбит тегами на куски, и в другом языке порядок слов иной: такой заголовок переводится целиком,
+ * ключ словаря — его разметка («Сравнение <em>оборудования</em>»), в переводе те же теги могут стоять на других словах.
+ * Перевода целиком нет — заголовок переводится по кускам, как остальной текст. Заголовок с другими тегами (ссылки, значки) — по кускам.
+ */
+export function headingKey(el: Element): string | null {
+  if (!HEADINGS.has(el.tagName)) return null;
+  const inner = (nodes: Node[]): string | null => {
+    let out = '';
+    for (const n of nodes) {
+      if (isText(n)) out += n.value;
+      else if (isElement(n) && INLINE.has(n.tagName) && !n.attrs.length) {
+        if (n.tagName === 'br') {
+          out += '<br>';
+          continue;
+        }
+        const body = inner(n.childNodes as Node[]);
+        if (body === null) return null;
+        out += `<${n.tagName}>${body}</${n.tagName}>`;
+      } else return null;
+    }
+    return out;
+  };
+  const html = inner(el.childNodes as Node[]);
+  if (html === null || !html.includes('<')) return null;
+  return normalizeText(html)
+    .replace(/\s*<br>\s*/g, '<br>')
+    .replace(/&/g, '&amp;');
+}
+
+/** Ключи заголовков куска страницы — для списка строк без перевода. */
+export function headingKeys(nodes: Node[]): string[] {
+  const out: string[] = [];
+  walk(
+    nodes,
+    () => undefined,
+    (el) => {
+      const key = headingKey(el);
+      if (key && /\p{L}/u.test(key)) out.push(key);
+    },
+  );
+  return out;
 }
 
 /** Кнопка <input>: её значение — надпись. */
@@ -53,6 +100,12 @@ export function localizeHtml(html: string, locale: Locale, dict: Dictionary): st
         if (TEXT_ATTRS.has(a.name) || (a.name === 'value' && isInputButton(el))) a.value = translateText(a.value, dict);
         else if (LINK_ATTRS[el.tagName]?.has(a.name)) a.value = localizeHref(a.value, locale);
       }
+      const key = headingKey(el);
+      const whole = key ? dict.get(key) : undefined;
+      if (whole === undefined) return;
+      el.childNodes = parseFragment(whole).childNodes;
+      for (const c of el.childNodes) c.parentNode = el;
+      return false;
     },
   );
   return serialize(frag);

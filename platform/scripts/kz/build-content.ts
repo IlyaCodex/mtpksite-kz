@@ -206,7 +206,7 @@ function extractCss(sources: { own: string[]; shared: string[] }, html: string):
       if (at.nodes && !at.nodes.some((n) => n.type !== 'comment')) at.remove();
     });
     root.walkComments((c) => void c.remove());
-    const css = root.toString().trim();
+    const css = root.toString().trim().replace(/"Inter SEO"/g, 'Inter');
     if (css) out.push(css);
     for (const f of frames) if (animations.has(f.params)) out.push(f.toString());
   }
