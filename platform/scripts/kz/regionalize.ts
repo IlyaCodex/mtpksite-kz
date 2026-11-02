@@ -92,8 +92,8 @@ function walk<T>(value: T, useRules: boolean, key = ''): T {
   return value;
 }
 
-/** Эти страницы заменяет scripts/kz/build-content.ts: в отчёте о них не говорим. */
-const OWN_PAGES = /^\/(?:kontakty|o-company|policy|soglasie|proekty|praktikum)\//;
+/** Эти страницы собирает scripts/kz/build-content.ts (тексты с живого .kz дословно, юридические — тоже): их здесь не трогаем. */
+const OWN_PAGES = /^\/(?:kontakty|o-company|policy|soglasie|proekty|praktikum)\/|^\/$/;
 
 const { db, close } = createDb(process.env.DATABASE_URL!, { max: 4, appName: 'regionalize' });
 let changed = 0;
@@ -116,9 +116,10 @@ function report(value: unknown, where: string, key = ''): void {
 // страницы: новости и отзывы — только пары: Россия и города заказчиков там — сам предмет текста
 const pages = await db.page.findMany({ where: { kind: 'page' }, select: { id: true, path: true, title: true, description: true, blocks: true } });
 for (const page of pages) {
+  if (OWN_PAGES.test(page.path)) continue;
   const useRules = !/^\/(?:news|otzyvy)\//.test(page.path);
   const next = { title: convert(page.title, useRules), description: page.description && convert(page.description, useRules), blocks: walk(page.blocks, useRules) };
-  if (useRules && !OWN_PAGES.test(page.path)) report(next, page.path);
+  if (useRules) report(next, page.path);
   if (JSON.stringify(next) === JSON.stringify({ title: page.title, description: page.description, blocks: page.blocks })) continue;
   changed++;
   if (!dry) await db.page.update({ where: { id: page.id }, data: { ...next, blocks: next.blocks as object } });

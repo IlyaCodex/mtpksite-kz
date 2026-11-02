@@ -78,7 +78,7 @@ export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage;
       <meta property="og:title" content={page.title} />
       <meta property="og:description" content={ogDescription} />
       <meta property="og:url" content={canonical} />
-      <meta property="og:site_name" content="УралИндуктор" />
+      <meta property="og:site_name" content={page.locale === 'en' ? 'UralInduktor' : 'УралИндуктор'} />
       <meta property="og:locale" content={OG_LOCALE[page.locale]} />
       <meta property="og:image" content={image} />
       {/* размеры известны только у общей картинки; у фото страницы их возьмёт сам мессенджер */}
