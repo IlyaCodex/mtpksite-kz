@@ -2,7 +2,7 @@ import { DEFAULT_LOCALE, LANG_CODE, LOCALES, OG_LOCALE, type Locale } from '@mtp
 import type { PageDto } from '@mtpk/shared/contracts';
 import { HEADER_LOGO, logoPreload } from '@/components/layout/Logo';
 import { clientModuleUrl, templateCssUrl } from '@/lib/assets';
-import { jsonLdHtml, ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '@/lib/seo';
+import { jsonLdHtml, ORGANIZATION_SCHEMA } from '@/lib/seo';
 import { DEFAULT_DESCRIPTION, DEFAULT_OG_IMAGE, SITE } from '@/lib/site';
 import { THEME_INIT } from '@/lib/theme';
 import { versioned } from '@/lib/versions';
@@ -19,6 +19,8 @@ export type HeadPage = Pick<
   preloadHero?: { href: string; media: string }[] | null;
   /** картинка превью ссылки (seo.ts, pageOgImage); нет — общая картинка сайта 1200×630 */
   ogImage?: string | null;
+  /** разметка компании и сайта на языке страницы; нет — разметка компании на русском */
+  siteJsonLd?: object[];
 };
 
 /**
@@ -71,13 +73,12 @@ export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage;
       ))}
       <link rel="alternate" hrefLang="x-default" href={`${SITE}/${DEFAULT_LOCALE}${page.path}`} />
       {page.noindex && <meta name="robots" content="noindex, follow" />}
-      {/* Google Search Console и Яндекс.Вебмастер */}
-      <meta name="google-site-verification" content="klj1lj9utoieH9ZljmhDYykW6XSM3G7dtdVklWGJQw4" />
-      <meta name="yandex-verification" content="5cf3197708e8d0e7" />
+      {/* Google Search Console — подтверждение прежнего uralinduktor.kz */}
+      <meta name="google-site-verification" content="o34IhcdZPf5o85DLm4M6MxOfw_Amv3V-3jHf8IpGk78" />
       <meta property="og:title" content={page.title} />
       <meta property="og:description" content={ogDescription} />
       <meta property="og:url" content={canonical} />
-      <meta property="og:site_name" content="УралИндуктор · МТПК" />
+      <meta property="og:site_name" content="УралИндуктор" />
       <meta property="og:locale" content={OG_LOCALE[page.locale]} />
       <meta property="og:image" content={image} />
       {/* размеры известны только у общей картинки; у фото страницы их возьмёт сам мессенджер */}
@@ -89,8 +90,9 @@ export function SiteHead({ page, home = false, modules = [] }: { page: HeadPage;
       <meta name="twitter:description" content={ogDescription} />
       <meta name="twitter:image" content={image} />
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(ORGANIZATION_SCHEMA) }} />
-      {home && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(WEBSITE_SCHEMA) }} />}
+      {(page.siteJsonLd ?? [ORGANIZATION_SCHEMA]).map((json, i) => (
+        <script key={`site-ld${i}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(json) }} />
+      ))}
       <CoreAssets modules={modules} />
       {page.preloadImage && (
         <link

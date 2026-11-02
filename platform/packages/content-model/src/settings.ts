@@ -20,11 +20,13 @@ const phone = z.object({
 });
 
 export const contactsSettings = z.object({
-  hours: text('Режим работы'),
-  phones: z.array(phone).describe('Телефоны (первый — бесплатный 8 800)'),
+  hours: text('Режим работы (пусто — в шапке не показывается)').optional(),
+  phones: z.array(phone).describe('Телефоны'),
   email: text('E-mail'),
-  telegram: href('Telegram'),
-  max: href('MAX'),
+  telegram: href('Telegram').optional(),
+  max: href('MAX').optional(),
+  instagram: href('Instagram').optional(),
+  tiktok: href('TikTok').optional(),
 });
 export type ContactsSettings = z.infer<typeof contactsSettings>;
 
@@ -159,25 +161,21 @@ export const DRAWER_ICONS = {
   company: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
   contacts: '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>',
   reviews: '<path d="M14 14a2 2 0 0 0 2-2V8h-2"/><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M8 14a2 2 0 0 0 2-2V8H8"/>',
-  praktikum: '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
   mail: '<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>',
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   contacts: {
-    hours: 'Режим работы 9:00–18:00 по\u00A0времени ЕКБ',
-    phones: [
-      { href: 'tel:+78003513401', text: '8\u00A0800\u00A0351-34-01', label: 'Позвонить бесплатно по России', local: false },
-      { href: 'tel:+73512116597', text: '+7 (351) 211-65-97', label: 'Позвонить', local: true },
-    ],
-    email: 'info@uralinduktor.ru',
+    phones: [{ href: 'tel:+77758534095', text: '+7 (775) 853-40-95', label: 'Позвонить', local: false }],
+    email: 'stasgross.ru@gmail.com',
     telegram: 'https://t.me/uralinduktor',
-    max: 'https://max.ru/join/_jtaGUl05P2n89T6htH_ANJV1CDSfJXki7ftWcOb-80',
+    instagram: 'https://www.instagram.com/reel/DNF-x6zsaDt/?igsh=MWJsZjZmbmM5ZzRhOA==',
+    tiktok: 'https://www.tiktok.com/@stas_gross?_r=1&_t=ZS-98IOPsrMYDw',
   },
   company: {
-    tagline: 'Производство и\u00A0поставка оборудования для\u00A0металлургии и\u00A0литейных производств с\u00A02013\u00A0года.',
-    copyright: '© 2013–2026 ООО «Миасская Торгово-Промышленная Компания»',
-    legal: 'ОГРН\u00A01137415000315 · ИНН\u00A07415079152',
+    tagline: 'Производство и поставка оборудования для металлургии и литейных производств с 2014 года.',
+    copyright: '© 2026 ТОО «Gross Metal Engineering»',
+    legal: 'Бенефициар: ТОО «Gross Metal Engineering» · БИН/ИИН 260440027830',
   },
   nav: [
     {
@@ -257,7 +255,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     { key: 'o-kompanii', href: '/o-company/', label: 'О компании' },
     { key: 'kontakty', href: '/kontakty/', label: 'Контакты' },
     { key: 'otzyvy', href: '/otzyvy/', label: 'Отзывы' },
-    { key: 'praktikum', href: '/praktikum/', label: 'Практикум' },
   ],
   drawer: [
     {
@@ -306,7 +303,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     { label: 'О\u00A0компании', href: '/o-company/', icon: DRAWER_ICONS.company },
     { label: 'Контакты', href: '/kontakty/', icon: DRAWER_ICONS.contacts },
     { label: 'Отзывы', href: '/otzyvy/', icon: DRAWER_ICONS.reviews },
-    { label: 'Практикум', href: '/praktikum/', icon: DRAWER_ICONS.praktikum },
   ],
   footer: {
     columns: [

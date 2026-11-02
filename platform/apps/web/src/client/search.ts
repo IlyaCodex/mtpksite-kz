@@ -1,4 +1,5 @@
 import { $, inertOutside, trapTab } from './dom';
+import { pageLocale, withoutLocale } from './i18n';
 
 /**
  * Поиск по сайту — окно по кнопке-«лупе». Модуль грузится только по первому
@@ -17,7 +18,6 @@ const ICON = {
   catalog: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
   stock: '<path d="M21 8l-9-5-9 5v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
   parts: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
-  book: '<path d="M4 19V5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h14"/>',
   phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',
 };
 const svg = (paths: string, cls = '') =>
@@ -29,7 +29,6 @@ const SECTIONS: [string, string, string][] = [
   ['Каталог', '/products/', ICON.catalog],
   ['Наличие', '/nalichie/', ICON.stock],
   ['Запчасти', '/products/zapchasti/', ICON.parts],
-  ['Практикум', '/praktikum/', ICON.book],
   ['Контакты', '/kontakty/', ICON.phone],
 ];
 
@@ -38,13 +37,12 @@ const SECTION_OF: [RegExp, string][] = [
   [/^\/products\/zapchasti\//, 'Запчасти'],
   [/^\/products\//, 'Каталог'],
   [/^\/uslugi\//, 'Услуги'],
-  [/^\/praktikum\//, 'Практикум'],
   [/^\/news\//, 'Новости'],
   [/^\/proekty\//, 'Проекты'],
   [/^\/nalichie\//, 'Наличие'],
 ];
 const sectionOf = (url: string) => {
-  const path = new URL(url, location.origin).pathname;
+  const path = withoutLocale(new URL(url, location.origin).pathname);
   return SECTION_OF.find(([re]) => re.test(path))?.[1] ?? 'Страница';
 };
 
@@ -162,7 +160,7 @@ function render(q: string, hits: Hit[] | 'error' | null): void {
   empty.hidden = hits.length > 0;
   empty.innerHTML = hits.length
     ? ''
-    : `<p class="ss-empty__title">Ничего не&nbsp;нашлось по&nbsp;запросу «${escapeHtml(q)}»</p><p class="ss-empty__hint">Проверьте написание или <a href="/kontakty/">спросите инженера</a>&nbsp;— подберём оборудование под&nbsp;задачу.</p>`;
+    : `<p class="ss-empty__title">Ничего не&nbsp;нашлось по&nbsp;запросу «<span>${escapeHtml(q)}</span>»</p><p class="ss-empty__hint">Проверьте написание или <a href="/kontakty/">спросите инженера</a>&nbsp;— подберём оборудование под&nbsp;задачу.</p>`;
   count.textContent = hits.length ? `Найдено: ${hits.length}` : '';
   status.textContent = hits.length ? `Найдено: ${hits.length}` : 'Ничего не найдено';
   input().setAttribute('aria-expanded', String(hits.length > 0));
@@ -176,7 +174,7 @@ function query(q: string): void {
   timer = window.setTimeout(async () => {
     modal?.querySelector('.search-modal__panel')!.classList.add('is-loading');
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=40`, { headers: { Accept: 'application/json' } });
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=40&locale=${pageLocale()}`, { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as { results: Hit[] };
       if (q === lastQuery) render(q, data.results.filter((d) => relevant(d, q)));

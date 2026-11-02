@@ -43,7 +43,7 @@ type CompareIndex = { sections: Record<string, CompareSection> };
          + 'здесь появится таблица характеристик.');
       return;
     }
-    fetch('/data/compare-index.json')
+    fetch('/data/compare-index.json?locale=' + ((location.pathname.match(/^\/(ru|kz|en)(?=\/)/) || [])[1] || 'ru'))
       .then(function (r) { if (!r.ok) throw new Error('index'); return r.json(); })
       .then(function (index) { render(index, store.read()); })
       .catch(function () { show('Не удалось загрузить характеристики. Обновите страницу.'); });
@@ -142,7 +142,7 @@ type CompareIndex = { sections: Record<string, CompareSection> };
     if (!ta) return;
     var lines = [PREFIX + ' (' + picked.length + ' поз.), раздел «' + section.title + '»:'];
     picked.forEach(function (it, i) {
-      lines.push((i + 1) + '. ' + it.name + ' — uralinduktor.ru' + it.url);
+      lines.push((i + 1) + '. ' + it.name + ' — uralinduktor.kz' + it.url);
     });
     // чем позиции отличаются — менеджеру это полезнее, чем первые попавшиеся
     // значения без названий параметров

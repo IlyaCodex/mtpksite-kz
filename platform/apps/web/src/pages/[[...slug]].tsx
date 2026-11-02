@@ -1,6 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import { heroPreload } from '@mtpk/content-kit/hero-css';
-import { localizeJsonLd, splitLocalePath, translateText } from '@mtpk/content-kit/i18n';
+import { LANG_CODE, localizeJsonLd, splitLocalePath, translateText } from '@mtpk/content-kit/i18n';
 import { activeNavFor } from '@mtpk/content-kit/page-meta';
 import { activeHoliday, nextHolidayChange, type Block } from '@mtpk/content-model';
 import { Blocks, buildRenderContext, holidayImageHints, preloadHints } from '@mtpk/ui';
@@ -12,7 +12,7 @@ import { Header } from '@/components/layout/Header';
 import { getDictionary, getHolidays, getPage, getSettings, getSiteData } from '@/lib/content';
 import { heroImage } from '@/lib/hero';
 import { legacyScripts, pageModules, type SitePageProps } from '@/lib/page-props';
-import { pageOgImage } from '@/lib/seo';
+import { ORGANIZATION_SCHEMA, pageOgImage, WEBSITE_SCHEMA } from '@/lib/seo';
 import { SITE, slugToPath } from '@/lib/site';
 
 /** Страница уходит в браузер чистым HTML: без React-рантайма и без копии данных. */
@@ -62,6 +62,7 @@ export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) 
         preloadSrcSet: preload?.srcSet ?? null,
         preloadSizes: preload?.sizes ?? null,
         jsonLd: page.jsonLd.map((json) => localizeJsonLd(json, locale, dict, SITE)),
+        siteJsonLd: [ORGANIZATION_SCHEMA, ...(home ? [{ ...WEBSITE_SCHEMA, inLanguage: LANG_CODE[locale] }] : [])].map((json) => localizeJsonLd(json, locale, dict, SITE)),
         cssTemplates: page.cssTemplates,
         externalStyles: page.externalStyles,
         inlineStyles: page.inlineStyles,
@@ -74,11 +75,11 @@ export const getStaticProps: GetStaticProps<SitePageProps> = async ({ params }) 
 };
 
 /** Любая страница сайта: шапка, блоки страницы (React-компоненты @mtpk/ui), подвал. */
-export default function SitePage({ path, blocks, settings, site, activeNav, holiday }: SitePageProps) {
+export default function SitePage({ locale, path, blocks, settings, site, activeNav, holiday }: SitePageProps) {
   return (
     <>
       <Viewport />
-      <Header settings={settings} activeNav={activeNav ?? undefined} />
+      <Header settings={settings} activeNav={activeNav ?? undefined} locale={locale} path={path} />
       <main>
         <Blocks blocks={blocks} ctx={buildRenderContext(path, blocks, site, holiday)} />
       </main>

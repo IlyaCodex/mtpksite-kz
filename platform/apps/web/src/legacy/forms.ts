@@ -260,7 +260,7 @@ type StatusType = 'pending' | 'success' | 'error';
       if (attached) fingerprint += '\n' + attached.name + ':' + attached.size + ':' + attached.lastModified;
       if (!requestId || fingerprint !== requestFingerprint) {
         if (!window.crypto || !window.crypto.getRandomValues) {
-          showStatus(status, 'error', 'Браузер не поддерживает защищённую отправку. Позвоните: +7 (351) 211-65-97');
+          showStatus(status, 'error', 'Браузер не поддерживает защищённую отправку. Позвоните: +7 (775) 853-40-95');
           return;
         }
         var bytes = new Uint8Array(16);
@@ -319,19 +319,19 @@ type StatusType = 'pending' | 'success' | 'error';
             // Телефон хранится только в текущей вкладке, не в URL/логах.
             if (goalReceipt !== requestId) { reachGoal(form); goalReceipt = requestId; }
             var phoneVal = phone ? phone.value.trim() : '';
-            var url = '/spasibo/';
+            var url = (location.pathname.match(/^\/(?:ru|kz|en)(?=\/)/) || [''])[0] + '/spasibo/';
             try { sessionStorage.setItem('ui_lead_confirmed_phone', phoneVal); } catch (e) {}
             // пропуск на «Спасибо» на 15 минут: без него открытая напрямую /spasibo/ — «не найдена» (proxy.ts)
-            document.cookie = 'ui_lead_sent=1; Max-Age=900; Path=/spasibo/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+            document.cookie = 'ui_lead_sent=1; Max-Age=900; Path=' + url + '; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
             showStatus(status, 'success', 'Заявка отправлена! Переходим…');
             window.location.assign(url);
             return; // дальше не выполняем — уходим со страницы
           } else {
-            showStatus(status, 'error', data.message || 'Не удалось отправить. Позвоните: +7 (351) 211-65-97');
+            showStatus(status, 'error', data.message || 'Не удалось отправить. Позвоните: +7 (775) 853-40-95');
           }
         })
         .catch(function () {
-          showStatus(status, 'error', 'Не удалось получить подтверждение отправки. Данные сохранены в форме — попробуйте ещё раз. Позвоните: +7 (351) 211-65-97');
+          showStatus(status, 'error', 'Не удалось получить подтверждение отправки. Данные сохранены в форме — попробуйте ещё раз. Позвоните: +7 (775) 853-40-95');
         })
         .finally(function () {
           clearTimeout(timeout);

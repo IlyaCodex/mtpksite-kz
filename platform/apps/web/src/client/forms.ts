@@ -1,6 +1,7 @@
 import { appendAnalytics, getMarketing, reachGoal, refreshYmClientId } from '@mtpk/ui/browser/marketing';
 import { clearQuoteItems, getQuoteItems, mergeTaskText, subscribeQuote } from '@mtpk/ui/browser/quote-store';
 import { $, $$ } from './dom';
+import { localized } from './i18n';
 
 /**
  * Формы заявок: все формы с data-form (и старые .js-lead-form из блоков
@@ -10,7 +11,7 @@ import { $, $$ } from './dom';
  */
 const ENDPOINT = '/api/send.php';
 const MAX_FILE = 10 * 1024 * 1024;
-const PHONE_FALLBACK = 'Позвоните: +7 (351) 211-65-97';
+const PHONE_FALLBACK = 'Позвоните: +7 (775) 853-40-95';
 type StatusType = 'pending' | 'success' | 'error';
 
 function showStatus(el: HTMLElement | null, type: StatusType, message: string): void {
@@ -33,7 +34,7 @@ function showStatus(el: HTMLElement | null, type: StatusType, message: string): 
  * Cookie без личных данных, только для /spasibo/.
  */
 function allowThanksPage(): void {
-  document.cookie = `ui_lead_sent=1; Max-Age=900; Path=/spasibo/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+  document.cookie = `ui_lead_sent=1; Max-Age=900; Path=${localized('/spasibo/')}; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
 }
 
 function randomId(): string | null {
@@ -179,7 +180,7 @@ function initForm(form: HTMLFormElement, index: number): void {
         }
         allowThanksPage();
         showStatus(status, 'success', 'Заявка отправлена! Переходим…');
-        window.location.assign('/spasibo/');
+        window.location.assign(localized('/spasibo/'));
       })
       .catch(() =>
         showStatus(status, 'error', `Не удалось получить подтверждение отправки. Данные сохранены в форме — попробуйте ещё раз. ${PHONE_FALLBACK}`),

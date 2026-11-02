@@ -33,7 +33,7 @@ export function Partner() {
       <div className="container">
         <div className="solve__head">
           <div>
-            <div className="solve__eyebrow">{'УралИндуктор · с\u00A02013\u00A0года'}</div>
+            <div className="solve__eyebrow">{'УралИндуктор · с\u00A02014\u00A0года'}</div>
             <h2 className="solve__title">
               Решения для&nbsp;задач <em>вашего производства</em>
             </h2>

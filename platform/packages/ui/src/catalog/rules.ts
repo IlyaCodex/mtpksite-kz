@@ -1,24 +1,11 @@
 /**
  * Правила каталога, которые раньше жили в клиентских скриптах:
- * бейдж «Сделано в России» (made-badges.js) и диапазоны фильтра (catalog-filter.js).
+ * диапазоны фильтра (catalog-filter.js) и сопоставление со складом.
  */
 
-/** Разделы с бейджем «Сделано в России» и исключения из них. */
-const MADE_ALLOW = ['induktsionnye-plavilnye-pechi', 'drobemetnoe-oborudovanie', 'sistemy-ohlazhdeniya'];
-const MADE_DENY = [
-  'induktsionnye-plavilnye-pechi/tranzistornye',
-  'sistemy-ohlazhdeniya/chillery',
-  'drobemetnoe-oborudovanie/turbina-s-pryamym-privodom',
-  'drobemetnoe-oborudovanie/turbina-s-remennym-privodom',
-];
-
-/** Нужен ли бейдж «Сделано в России» товару/категории по адресу /products/… */
-export function isMadeInRussia(href: string | undefined): boolean {
-  const m = String(href || '').match(/^\/products\/(.+?)\/?$/);
-  if (!m) return false;
-  const slug = m[1];
-  if (MADE_DENY.some((d) => slug === d || slug.startsWith(`${d}/`))) return false;
-  return MADE_ALLOW.some((a) => slug === a || slug.startsWith(`${a}/`));
+/** Бейдж «Сделано в России» на сайте для Казахстана не показывается. */
+export function isMadeInRussia(_href: string | undefined): boolean {
+  return false;
 }
 
 /** slug для сопоставления со складом: '/products/a/b/' → 'a/b' */

@@ -19,11 +19,10 @@ const Icon = ({ name, className }: { name: keyof typeof ICONS; className?: strin
 
 /** Контакты компании — по умолчанию (свои у блока — поле contacts). Адрес начинает вторую группу (линия над ним). */
 const CONTACTS: ContactItem[] = [
-  { icon: 'phone', label: 'Телефон (бесплатно по России)', value: '8&nbsp;800&nbsp;351-34-01', meta: 'Звонок из любого региона', href: 'tel:+78003513401' },
-  { icon: 'phone', label: 'Телефон офиса', value: '+7&nbsp;(351)&nbsp;211-65-97', meta: 'Отдел продаж и инженерный центр', href: 'tel:+73512116597' },
-  { icon: 'letter', label: 'Электронная почта', value: 'info@uralinduktor.ru', meta: 'Ответ в течение рабочего дня', href: 'mailto:info@uralinduktor.ru' },
-  { icon: 'pin', label: 'Главный офис', value: 'Челябинская область, г.&nbsp;Миасс,<br>ул.&nbsp;Уральских Добровольцев,&nbsp;1в' },
-  { icon: 'clock', label: 'График работы', value: 'Пн&nbsp;—&nbsp;Пт, 9:00&nbsp;—&nbsp;18:00', meta: 'МСК+2 · время ЕКБ' },
+  { icon: 'phone', label: 'Единый контактный номер', value: '+7&nbsp;(775)&nbsp;853-40-95', meta: 'Отдел продаж и инженерный центр', href: 'tel:+77758534095' },
+  { icon: 'letter', label: 'Электронная почта', value: 'stasgross.ru@gmail.com', meta: 'Ответ в течение рабочего дня', href: 'mailto:stasgross.ru@gmail.com' },
+  { icon: 'pin', label: 'Адрес главного офиса', value: 'г. Астана, район Сарыарка, отель Radisson, офис 4' },
+  { icon: 'clock', label: 'График работы', value: 'Пн&nbsp;—&nbsp;Пт, 9:00&nbsp;—&nbsp;18:00', meta: 'GMT+5 (Астана)' },
 ];
 
 /**

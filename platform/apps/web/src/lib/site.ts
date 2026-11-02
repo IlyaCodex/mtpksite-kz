@@ -1,8 +1,5 @@
 /** Канонический адрес сайта: canonical, og:url, sitemap, JSON-LD. */
-export const SITE = (process.env.SITE_URL ?? 'https://uralinduktor.ru').replace(/\/$/, '');
-
-/** Коллтрекинг Mango: имя файла содержит дату и хеш сборки — кешируется надолго. */
-export const MANGO_SCRIPT = '/js/mango-uibusiness-tracking-20261007-63dc454cb493.js';
+export const SITE = (process.env.SITE_URL ?? 'https://uralinduktor.kz').replace(/\/$/, '');
 
 export const DEFAULT_OG_IMAGE = '/og/default.jpg';
 export const DEFAULT_DESCRIPTION =

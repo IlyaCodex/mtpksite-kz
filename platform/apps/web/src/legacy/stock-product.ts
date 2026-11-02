@@ -17,7 +17,7 @@
   var phero = document.querySelector('.phero');
   if (!phero) return;
 
-  var m = location.pathname.match(/^\/products\/(.+?)\/?$/);
+  var m = location.pathname.match(/^(?:\/(?:ru|kz|en))?\/products\/(.+?)\/?$/);
   if (!m) return;
   var slug = m[1].replace(/\/+$/, '');
 

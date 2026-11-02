@@ -12,7 +12,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="footer__top">
           <div className="footer__brand-block">
             <a href="/" className="footer__brand">
-              <Logo src="/brand/logo-footer-white.png" alt="УралИндуктор · ООО МТПК" width="252" height="72" loading="lazy" decoding="async" />
+              <Logo src="/brand/logo-footer-white.png" alt="УралИндуктор" width="252" height="72" loading="lazy" decoding="async" />
             </a>
             <p className="footer__brand-tagline">{company.tagline}</p>
             <div className="footer__contact">
@@ -22,12 +22,26 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               <ContactLink href={`mailto:${contacts.email}`} icon={FOOTER_MAIL_SVG} text={contacts.email} />
             </div>
             <div className="footer__social">
-              <a href={contacts.telegram} aria-label="Telegram">
-                <TelegramGlyph />
-              </a>
-              <a href={contacts.max} aria-label="MAX">
-                <MaxLogo id="maxGrad-footer" size={24} />
-              </a>
+              {contacts.instagram && (
+                <a href={contacts.instagram} aria-label="Instagram" target="_blank" rel="noopener">
+                  <img src="/img/kz/social/instagram.svg" alt="" width="18" height="18" loading="lazy" decoding="async" />
+                </a>
+              )}
+              {contacts.tiktok && (
+                <a href={contacts.tiktok} aria-label="TikTok" target="_blank" rel="noopener">
+                  <img src="/img/kz/social/tiktok.svg" alt="" width="18" height="18" loading="lazy" decoding="async" />
+                </a>
+              )}
+              {contacts.telegram && (
+                <a href={contacts.telegram} aria-label="Telegram">
+                  <TelegramGlyph />
+                </a>
+              )}
+              {contacts.max && (
+                <a href={contacts.max} aria-label="MAX">
+                  <MaxLogo id="maxGrad-footer" size={24} />
+                </a>
+              )}
             </div>
           </div>
 

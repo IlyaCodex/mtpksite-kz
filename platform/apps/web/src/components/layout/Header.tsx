@@ -1,54 +1,70 @@
 import { Fragment } from 'react';
+import { DEFAULT_LOCALE, type Locale } from '@mtpk/content-kit/i18n';
 import type { NavItem, SiteSettings } from '@mtpk/content-model';
 import { ContactLink } from './ContactLink';
 import { QuickCallForm } from '@mtpk/ui';
 import { ClockIcon, MAIL_SVG, MaxLogo, MenuIcon, SearchIcon, TelegramLogo, ThemeIcons } from './icons';
+import { LangSwitch } from './LangSwitch';
 import { HEADER_LOGO, Logo } from './Logo';
 
 /**
- * Шапка сайта — одна на все страницы, включая статьи Практикума: строка контактов, логотип,
+ * Шапка сайта — одна на все страницы: строка контактов и переключатель языка, логотип,
  * главное меню с мегаменю, поиск, переключатель светлой и тёмной темы, мобильное меню и
  * экспресс-звонок. Контакты и пункты меню — из настроек сайта (админка «Шапка, меню, контакты»).
  */
-export function Header({ settings, activeNav }: { settings: SiteSettings; activeNav?: string }) {
+export function Header({ settings, activeNav, locale = DEFAULT_LOCALE, path = '/' }: { settings: SiteSettings; activeNav?: string; locale?: Locale; path?: string }) {
   const { contacts } = settings;
   return (
     // класс is-scrolled при прокрутке ставит клиентский модуль (header.ts)
     <div className="header-shell">
       <div className="header-top">
         <div className="container header-top__inner">
-          <span className="contact-hours" aria-label="Режим работы">
-            <ClockIcon />
-            {contacts.hours}
-          </span>
+          {contacts.hours && (
+            <>
+              <span className="contact-hours" aria-label="Режим работы">
+                <ClockIcon />
+                {contacts.hours}
+              </span>
+              <span className="contact-sep" />
+            </>
+          )}
           {contacts.phones.map((phone) => (
             <Fragment key={phone.href}>
-              <span className="contact-sep" />
               <ContactLink
                 href={phone.href}
                 className={phone.local ? 'contact-link contact-link--phone contact-link--phone-local' : 'contact-link contact-link--phone'}
                 aria-label={phone.label}
                 text={phone.text}
               />
+              <span className="contact-sep" />
             </Fragment>
           ))}
-          <span className="contact-sep" />
           <ContactLink href={`mailto:${contacts.email}`} className="contact-link" aria-label="Написать на email" icon={MAIL_SVG} text={contacts.email} />
           <span className="contact-sep" />
-          <div className="messengers" aria-label="Связь в мессенджерах">
-            <a href={contacts.telegram} className="msg-icon" aria-label="Написать в Telegram" title="Telegram">
-              <TelegramLogo />
-            </a>
-            <a href={contacts.max} className="msg-icon" aria-label="Написать в MAX" title="MAX">
-              <MaxLogo id="maxGrad-header" size={240} />
-            </a>
-          </div>
+          {(contacts.telegram || contacts.max) && (
+            <>
+              <div className="messengers" aria-label="Связь в мессенджерах">
+                {contacts.telegram && (
+                  <a href={contacts.telegram} className="msg-icon" aria-label="Написать в Telegram" title="Telegram">
+                    <TelegramLogo />
+                  </a>
+                )}
+                {contacts.max && (
+                  <a href={contacts.max} className="msg-icon" aria-label="Написать в MAX" title="MAX">
+                    <MaxLogo id="maxGrad-header" size={240} />
+                  </a>
+                )}
+              </div>
+              <span className="contact-sep" />
+            </>
+          )}
+          <LangSwitch locale={locale} path={path} />
         </div>
       </div>
 
       <header className="header">
         <div className="container header__inner">
-          <a href="/" className="header__brand" aria-label="УралИндуктор · МТПК — на главную">
+          <a href="/" className="header__brand" aria-label="УралИндуктор — на главную">
             <Logo
               src={HEADER_LOGO}
               alt="УралИндуктор · производство и поставка оборудования для металлургии"

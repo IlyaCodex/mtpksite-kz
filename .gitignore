@@ -68,3 +68,5 @@ id_ed25519*
 exports/kz-live/
 exports/*.dump
 exports/kz-missing.json
+exports/kz-pairs.json
+exports/kz-home-source.json

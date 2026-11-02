@@ -1127,3 +1127,30 @@ a.bo-item__value:focus-visible { outline: none; }
   .faq__item summary { padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5); font-size: 16px; }
   .faq__answer { padding: 0 var(--sp-5) var(--sp-5); font-size: 15px; }
 }
+
+/* Переключатель языка — в верхней полосе шапки */
+.lang-switch { display: flex; align-items: center; gap: var(--sp-1); flex-shrink: 0; }
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.lang-btn:hover { color: var(--text-brand); }
+.lang-btn.is-active { border-color: var(--text-brand); }
+.lang-flag { display: inline-flex; width: 22px; height: 15px; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08); flex-shrink: 0; }
+.lang-flag svg { display: block; width: 100%; height: 100%; }
+@media (max-width: 480px) {
+  .lang-btn { padding: 3px 5px; }
+  .lang-code { display: none; }
+}

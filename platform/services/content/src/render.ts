@@ -9,6 +9,7 @@ import {
   stripHtmlComments,
   type StockOffer,
 } from '@mtpk/content-kit';
+import { localizeHtml, translateText, type Dictionary, type Locale } from '@mtpk/content-kit/i18n';
 import { walkBlocks, type Block } from '@mtpk/content-model';
 import { renderBlocksToHtml, renderFormSlots } from '@mtpk/ui/server';
 import type { Page, StyleBlock } from '@mtpk/db';
@@ -156,12 +157,12 @@ const hyphens = (t: string) => t.replace(/[\u2010\u2011\u2012]/g, '-');
  * Документ для поискового индекса: собственный текст страницы (без общих
  * блоков форм и преимуществ — иначе их слова находились бы на каждой странице).
  */
-export function toSearchDoc(page: Page, dto: PageDto): SearchDoc | null {
+export function toSearchDoc(page: Page, dto: PageDto, locale: Locale, dict: Dictionary): SearchDoc | null {
   if (!dto.searchable || page.noindex || page.status !== 'published') return null;
-  const source = stripBadges(stripCrumbs(page.kind === 'document' ? pagefindRegion(page.body ?? '') : seoHtml(page, { contentOnly: true })));
-  const title = hyphens(firstH1(source) || page.title.split('|')[0].trim());
+  const source = localizeHtml(stripBadges(stripCrumbs(page.kind === 'document' ? pagefindRegion(page.body ?? '') : seoHtml(page, { contentOnly: true }))), locale, dict);
+  const title = hyphens(firstH1(source) || translateText(page.title, dict).split('|')[0].trim());
   return {
-    path: page.path,
+    path: `/${locale}${page.path}`,
     title,
     body: hyphens(htmlToText(source)),
     image: dto.searchImage,

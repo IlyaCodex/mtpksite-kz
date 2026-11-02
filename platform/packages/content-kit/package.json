@@ -22,7 +22,9 @@
     "./doc-edit": "./src/doc-edit.ts",
     "./hidden-links": "./src/hidden-links.ts",
     "./hero-css": "./src/hero-css.ts",
-    "./i18n": "./src/i18n.ts"
+    "./i18n": "./src/i18n.ts",
+    "./locale": "./src/locale.ts",
+    "./ui-strings": "./src/ui-strings.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

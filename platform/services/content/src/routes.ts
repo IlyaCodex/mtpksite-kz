@@ -5,6 +5,8 @@ import { classifyStyleBlock, detectTemplate, hasStockBlocks, normalizePath, reso
 import { sectionParts } from '@mtpk/content-kit/section';
 import { cssFileRecord } from '@mtpk/content-kit/styles';
 import { formatHtml } from '@mtpk/content-kit/format-html';
+import { LOCALES, translateDeep } from '@mtpk/content-kit/i18n';
+import { UI_STRINGS } from '@mtpk/content-kit/ui-strings';
 import { buttonDesignAttrs } from '@mtpk/content-kit/design';
 import { extractBlocksInlineStyles, rulesToCss } from '@mtpk/content-kit/inline-styles';
 import { resolveCatalogBlocks } from '@mtpk/content-kit/catalog';
@@ -75,11 +77,20 @@ export async function publicRoutes(base: FastifyInstance, { store, db }: Deps) {
 
   // Совместимые адреса старой статики: /data/*.json и вынесенные стили.
   const nocache = { 'Cache-Control': 'no-cache, must-revalidate' };
+  const localeQuery = z.object({ locale: z.enum(LOCALES).default('ru') });
   app.get('/v1/data/stock.json', { schema: { tags: ['Сайт'], summary: 'Наличие на складе (/data/stock.json)' } }, async (_req, reply) =>
     reply.headers(nocache).send(await store.stock()),
   );
-  app.get('/v1/data/compare-index.json', { schema: { tags: ['Сайт'], summary: 'Характеристики для сравнения' } }, async (_req, reply) =>
-    reply.headers(nocache).send((await store.compare()).index),
+  app.get('/v1/data/ui-strings.json', { schema: { tags: ['Сайт'], summary: 'Словарь строк из скриптов сайта (client/i18n.ts)', querystring: localeQuery } }, async (req, reply) => {
+    const dict = await store.dictionary(req.query.locale);
+    const rows = UI_STRINGS.flatMap((s) => {
+      const target = dict.get(s);
+      return target === undefined ? [] : [[s, target]];
+    });
+    return reply.header('Cache-Control', 'public, max-age=600').send(Object.fromEntries(rows));
+  });
+  app.get('/v1/data/compare-index.json', { schema: { tags: ['Сайт'], summary: 'Характеристики для сравнения', querystring: localeQuery } }, async (req, reply) =>
+    reply.headers(nocache).send(translateDeep((await store.compare()).index, await store.dictionary(req.query.locale))),
   );
   app.get('/v1/data/compare-sections.json', { schema: { tags: ['Сайт'], summary: 'Разделы со сравнением' } }, async (_req, reply) =>
     reply.headers(nocache).send((await store.compare()).sections),

@@ -10,9 +10,8 @@ export const PAGE_FEATURES: [string, RegExp][] = [
   ['stock-product', /class="phero"/],
   // «Запросить цену» — дозапись позиции в форму (карточка и плитки каталога)
   ['quote-form', /class="(phero__title|pcard)|js-quote-btn/],
-  // плитки каталога: наличие, «Сделано в России», сравнение, фильтр
+  // плитки каталога: наличие, сравнение, фильтр
   ['stock-badges', /class="pcard/],
-  ['made-badges', /class="(pcard|phero|cat-card__cover|teaser-card__cover)/],
   ['compare', /class="pcard|class="phero__actions|data-compare/],
   ['catalog-filter', /data-filter-form/],
   // оглавление характеристик

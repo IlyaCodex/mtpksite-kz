@@ -14,6 +14,7 @@ import {
 } from '@mtpk/content-kit';
 import { hiddenPages, resolveCatalogBlocks, type CatalogData } from '@mtpk/content-kit/catalog';
 import { darkVars } from '@mtpk/content-kit/dark';
+import { LOCALES, splitLocalePath, type Dictionary, type Locale } from '@mtpk/content-kit/i18n';
 import { hiddenTest, pruneHiddenHtml, pruneHiddenLinks, type HiddenTest } from '@mtpk/content-kit/hidden-links';
 import { styleFileCss } from '@mtpk/content-kit/styles';
 import { DEFAULT_HOLIDAYS, DEFAULT_SETTINGS, holidaySettings, siteSettings, type Block, type HolidaySettings, type SiteSettings } from '@mtpk/content-model';
@@ -47,8 +48,11 @@ function withData<T extends { id: number; blocks: unknown }>(row: T, data: Catal
  * от таблиц content.*: страница с развёрнутыми блоками (карточки каталога,
  * шаблон товара), склад, индекс сравнения.
  */
+const DICTIONARY_TTL_MS = 5 * 60_000;
+
 export class ContentStore {
   private styles: Map<string, StyleBlock> | null = null;
+  private dictionaries = new Map<Locale, { at: number; dict: Dictionary }>();
   /** готовые CSS-файлы по хешу: блок стилей по хешу не меняется — переделку цветов делаем один раз */
   private readonly styleFiles = new Map<string, string>();
 
@@ -308,11 +312,28 @@ export class ContentStore {
     await this.cache.del('holidays');
   }
 
-  async searchDoc(path: string): Promise<SearchDoc | null> {
+  /** Словарь языка для поиска и данных сравнения (у сайта свой — lib/content.ts). */
+  async dictionary(locale: Locale): Promise<Dictionary> {
+    const known = this.dictionaries.get(locale);
+    if (known && Date.now() - known.at < DICTIONARY_TTL_MS) return known.dict;
+    const rows = await this.db.translation.findMany({ where: { locale }, select: { source: true, target: true } });
+    const dict = new Map(rows.map((r) => [r.source, r.target]));
+    this.dictionaries.set(locale, { at: Date.now(), dict });
+    return dict;
+  }
+
+  resetDictionaries(): void {
+    this.dictionaries.clear();
+  }
+
+  /** Документ поиска по адресу с языком: /kz/products/x/. */
+  async searchDoc(localePath: string): Promise<SearchDoc | null> {
+    const { locale, path } = splitLocalePath(localePath);
+    if (!locale) return null;
     const found = await this.loadPage(path);
     if (!found) return null;
     const row = await this.pageData(found);
-    return toSearchDoc(row, renderPage(row, await this.styleMap(), this.site));
+    return toSearchDoc(row, renderPage(row, await this.styleMap(), this.site), locale, await this.dictionary(locale));
   }
 
   /** Все документы для поиска — постранично, чтобы не держать 50 МБ HTML разом. */
@@ -326,8 +347,11 @@ export class ContentStore {
       for (const found of rows) {
         if (found.status !== 'published' || hidden.has(found.id)) continue;
         const row = await this.pageData(found, catalog);
-        const doc = toSearchDoc(row, renderPage(row, styles, this.site));
-        if (doc) yield doc;
+        const dto = renderPage(row, styles, this.site);
+        for (const locale of LOCALES) {
+          const doc = toSearchDoc(row, dto, locale, await this.dictionary(locale));
+          if (doc) yield doc;
+        }
       }
     }
   }

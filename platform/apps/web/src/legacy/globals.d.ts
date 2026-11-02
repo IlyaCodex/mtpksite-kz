@@ -38,6 +38,8 @@ declare global {
     refreshMadeBadges?: () => void;
     uiCompare?: CompareStore;
     projects?: Project[];
+    /** кейсы реестра проектов (js/cases-data*.js) */
+    casesByCategory?: Record<string, unknown[]>;
     TransistorCatalog?: unknown;
   }
 

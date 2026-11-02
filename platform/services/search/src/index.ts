@@ -5,6 +5,7 @@
  */
 import crypto from 'node:crypto';
 import { z } from 'zod';
+import { LOCALES } from '@mtpk/content-kit/locale';
 import {
   CONTENT_STREAM,
   consumeEvents,
@@ -71,11 +72,15 @@ async function reindexAll(): Promise<number> {
   return docs.length;
 }
 
-async function reindexOne(path: string): Promise<void> {
-  const res = await fetch(`${env.CONTENT_URL}/v1/search-docs/by-path?path=${encodeURIComponent(path)}`);
-  if (res.status === 404) await db.searchDocument.deleteMany({ where: { path } });
-  else if (res.ok) await upsert([(await res.json()) as SearchDoc]);
-  else throw new Error(`контент-сервис ответил ${res.status}`);
+/** Одна страница на всех языках: в индексе адреса с приставкой языка. */
+async function reindexOne(pagePath: string): Promise<void> {
+  for (const locale of LOCALES) {
+    const path = `/${locale}${pagePath}`;
+    const res = await fetch(`${env.CONTENT_URL}/v1/search-docs/by-path?path=${encodeURIComponent(path)}`);
+    if (res.status === 404) await db.searchDocument.deleteMany({ where: { path } });
+    else if (res.ok) await upsert([(await res.json()) as SearchDoc]);
+    else throw new Error(`контент-сервис ответил ${res.status}`);
+  }
   await cache.clear();
 }
 
@@ -103,7 +108,7 @@ function toTsQuery(words: string[]): string {
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-async function search(q: string, limit: number): Promise<SearchResponse> {
+async function search(q: string, limit: number, locale: string): Promise<SearchResponse> {
   const words = tokens(q);
   const tsq = toTsQuery(words);
   if (!tsq) return { query: q, total: 0, results: [] };
@@ -120,7 +125,7 @@ async function search(q: string, limit: number): Promise<SearchResponse> {
         'StartSel=' || chr(1) || ', StopSel=' || chr(2) || ', MaxWords=28, MinWords=12, ShortWord=2, MaxFragments=1') as excerpt,
       count(*) over() as total
     from search.documents d, q
-    where d.tsv @@ q.tsq or d.title ilike ${like}
+    where d.path like ${`/${locale}/%`} and (d.tsv @@ q.tsq or d.title ilike ${like})
     order by ts_rank_cd(d.tsv, q.tsq, 32) * d.weight
       + case when d.title ilike ${like} then 20 else 0 end
       + case when d.title ~* ${word} then 20 else 0 end desc, d.title
@@ -148,12 +153,13 @@ await startService({
     const searchQuery = z.object({
       q: z.string().max(200).default('').describe('Запрос'),
       limit: z.coerce.number().int().min(1).max(50).default(40),
+      locale: z.enum(LOCALES).default('ru').describe('Язык страницы'),
     });
     app.get('/api/search', { schema: { tags: ['Поиск'], summary: 'Поиск по сайту', querystring: searchQuery } }, async (req, reply) => {
-      const { q, limit } = req.query;
-      const key = crypto.createHash('sha1').update(`${q.trim().toLowerCase()}|${limit}`).digest('hex');
+      const { q, limit, locale } = req.query;
+      const key = crypto.createHash('sha1').update(`${q.trim().toLowerCase()}|${limit}|${locale}`).digest('hex');
       reply.header('Cache-Control', 'no-store');
-      return cache.wrap(`q:${key}`, 600, () => search(q, limit));
+      return cache.wrap(`q:${key}`, 600, () => search(q, limit, locale));
     });
     app.post(
       '/admin/v1/reindex',

@@ -11,6 +11,7 @@
  * когда изменена; меню пользователя (медиатека, настройки, выход); «Скрыть».
  */
 import { icon, type IconName } from './admin-bar-icons';
+import { withoutLocale } from './i18n';
 
 type Link = { label: string; href: string };
 type Bar = {
@@ -185,7 +186,7 @@ function mount(bar: Bar): void {
       unmount(root);
       restoreButton();
     } else if (act === 'purge') {
-      const res = await post('content/cache/purge', { paths: [location.pathname] }).catch(() => null);
+      const res = await post('content/cache/purge', { paths: [withoutLocale(location.pathname)] }).catch(() => null);
       if (res?.ok) {
         toast('Страница обновлена — показываю свежую версию');
         setTimeout(() => location.reload(), 700);
@@ -243,7 +244,7 @@ export async function mountAdminBar(): Promise<void> {
     /* ничего */
   }
   if (hidden) return restoreButton();
-  const res = await fetch(`${API}/site-bar?path=${encodeURIComponent(location.pathname)}`, { credentials: 'same-origin', headers: { accept: 'application/json' } }).catch(() => null);
+  const res = await fetch(`${API}/site-bar?path=${encodeURIComponent(withoutLocale(location.pathname))}`, { credentials: 'same-origin', headers: { accept: 'application/json' } }).catch(() => null);
   // сессия кончилась (или админки нет) — флажок больше не нужен
   if (res && (res.status === 401 || res.status === 404)) return dropCookie();
   if (!res?.ok) return;

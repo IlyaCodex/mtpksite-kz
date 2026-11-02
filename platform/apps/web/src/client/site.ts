@@ -11,9 +11,13 @@ import { initConsent } from './consent';
 import { ready } from './dom';
 import { initForms } from './forms';
 import { initHeader } from './header';
+import { initI18n } from './i18n';
 import { initPage } from './page';
 import { initTheme } from './theme';
 import { initToTop } from './to-top';
+
+// раньше скриптов страницы: то, что они вставят, сразу приводится к языку страницы
+initI18n();
 
 ready(() => {
   initHeader();

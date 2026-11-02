@@ -5,7 +5,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  var cards = document.querySelectorAll('article.pcard a[href^="/products/"]');
+  var cards = document.querySelectorAll('article.pcard a[href*="/products/"]');
   if (!cards.length) return;
 
   fetch('/data/stock.json', { credentials: 'same-origin' })
@@ -24,7 +24,7 @@
         var card = a.closest('article.pcard');
         if (!card || seen.has(card)) return;
         // вытаскиваем slug — то, что между /products/ и (опц.) хвостовым /
-        var m = a.getAttribute('href')!.match(/^\/products\/(.+?)\/?$/);
+        var m = a.getAttribute('href')!.match(/^(?:\/(?:ru|kz|en))?\/products\/(.+?)\/?$/);
         if (!m) return;
         var slug = m[1].replace(/\/+$/, '');
         if (!inStock[slug]) return;

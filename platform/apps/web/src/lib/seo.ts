@@ -8,8 +8,8 @@ export const ORGANIZATION_SCHEMA = {
   '@type': 'Organization',
   '@id': `${SITE}/#organization`,
   name: 'УралИндуктор',
-  legalName: 'ООО «МТПК»',
-  alternateName: 'МТПК-УралИндуктор',
+  legalName: 'ТОО «Gross Metal Engineering»',
+  alternateName: 'Gross Metal Engineering',
   url: SITE,
   logo: {
     '@type': 'ImageObject',
@@ -21,21 +21,21 @@ export const ORGANIZATION_SCHEMA = {
   image: `${SITE}/og/default.jpg`,
   description:
     'Производство индукционных плавильных печей, дробемётных установок, чиллеров и градирен, сталеразливочных ковшей и оборудования для литейных производств.',
-  telephone: ['+7-800-351-34-01', '+7-351-211-65-97'],
-  email: 'info@uralinduktor.ru',
+  telephone: '+7-775-853-40-95',
+  email: 'stasgross.ru@gmail.com',
   address: {
     '@type': 'PostalAddress',
-    streetAddress: 'ул. Уральских Добровольцев, стр. 1В',
-    addressLocality: 'Миасс',
-    addressRegion: 'Челябинская область',
-    postalCode: '456318',
-    addressCountry: 'RU',
+    streetAddress: 'район Сарыарка, отель Radisson, офис 4',
+    addressLocality: 'Астана',
+    addressRegion: 'Астана',
+    postalCode: '010000',
+    addressCountry: 'KZ',
   },
-  areaServed: ['Россия', 'Казахстан', 'Беларусь', 'Узбекистан', 'Кыргызстан', 'Таджикистан', 'Армения'].map((name) => ({
+  areaServed: ['Казахстан', 'Узбекистан', 'Кыргызстан', 'Таджикистан', 'Армения', 'Беларусь'].map((name) => ({
     '@type': 'Country',
     name,
   })),
-  sameAs: ['https://t.me/uralinduktor', 'https://max.ru/uralinduktor'],
+  sameAs: ['https://t.me/uralinduktor', 'https://wa.me/77758534095', 'https://www.tiktok.com/@stas_gross'],
 };
 
 /** JSON-LD WebSite с поиском по сайту — только на главной. */
@@ -43,8 +43,8 @@ export const WEBSITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   '@id': `${SITE}/#website`,
-  url: SITE,
-  name: 'УралИндуктор · МТПК',
+  url: `${SITE}/`,
+  name: 'УралИндуктор',
   description:
     'Производство индукционных плавильных печей, дробемётных установок, чиллеров и градирен, сталеразливочных ковшей и оборудования для литейных производств.',
   publisher: { '@id': `${SITE}/#organization` },
@@ -124,7 +124,7 @@ export function pageMetadata(page: Pick<PageDto, 'path' | 'title' | 'description
       title: page.title,
       description: ogDescription,
       images: [{ url: image, width: 1200, height: 630 }],
-      siteName: 'УралИндуктор · МТПК',
+      siteName: 'УралИндуктор',
       locale: 'ru_RU',
     },
     twitter: {
@@ -140,6 +140,6 @@ export const NOT_FOUND_PAGE = {
   path: '/404/',
   title: 'Страница не найдена — УралИндуктор',
   description:
-    'Запрошенная страница не найдена. Вернитесь на главную сайта УралИндуктор / МТПК или воспользуйтесь поиском.',
+    'Запрошенная страница не найдена. Вернитесь на главную сайта УралИндуктор или воспользуйтесь поиском.',
   noindex: false,
 };

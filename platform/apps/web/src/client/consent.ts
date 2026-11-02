@@ -5,11 +5,11 @@
  */
 const KEY = 'ui_cookie_consent';
 const CONSENT_VERSION = 'v2026.1';
-// кабинеты «УралИндуктор3», uibusiness и третий — как на боевом сайте (сверено 15.10.2026)
-const YM_COUNTERS = [25228307, 112991420, 94628479];
-const TMR_COUNTER = '3784620'; // Top.Mail.Ru
+// счётчик и проект прежнего uralinduktor.kz: история посещений продолжается в тех же кабинетах
+const YM_COUNTERS = [111375860];
+const ROISTAT_PROJECT = '55e30c285273fb0205de07d6cfbcb9ce';
 
-type W = Window & { ym?: ((...args: unknown[]) => void) & { a?: unknown[]; l?: number }; _tmr?: unknown[] };
+type W = Window & { ym?: ((...args: unknown[]) => void) & { a?: unknown[]; l?: number }; roistatProjectId?: string; roistatHost?: string };
 
 function hasConsent(): boolean {
   try {
@@ -53,8 +53,10 @@ function startAnalytics(): void {
   for (const id of YM_COUNTERS) {
     ym(id, 'init', { webvisor: true, clickmap: true, referrer: document.referrer, url: location.href, accurateTrackBounce: true, trackLinks: true });
   }
-  (w._tmr ??= []).push({ id: TMR_COUNTER, type: 'pageView', start: Date.now() });
-  loadScript('https://top-fwz1.mail.ru/js/code.js', 'tmr-code');
+  w.roistatProjectId = ROISTAT_PROJECT;
+  w.roistatHost = 'cloud.roistat.com';
+  const visited = /(?:^|; )roistat_visit=/.test(document.cookie);
+  loadScript(`https://cloud.roistat.com${visited ? '/dist/module.js' : `/api/site/1.0/${ROISTAT_PROJECT}/init?referrer=${encodeURIComponent(location.href)}`}`, 'roistat-code');
 }
 
 function scheduleAnalytics(): void {

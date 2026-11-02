@@ -1,5 +1,6 @@
 import { clearCompare, COMPARE_LIMIT, COMPARE_PAGE, exposeCompareApi, readCompare, subscribeCompare, toggleCompare } from '@mtpk/ui/browser/compare-store';
 import { $, $$, delegate } from './dom';
+import { withoutLocale } from './i18n';
 
 const ICON =
   '<svg class="cmp-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M4 8h16M7 8l-3 6h6zM17 8l-3 6h6z"/></svg>';
@@ -21,7 +22,7 @@ function paintAll(): void {
 function renderBar(): void {
   const items = selected();
   let bar = document.getElementById('cmp-bar');
-  const onComparePage = location.pathname.replace(/\/?$/, '/') === COMPARE_PAGE;
+  const onComparePage = withoutLocale(location.pathname).replace(/\/?$/, '/') === COMPARE_PAGE;
   if (onComparePage || !items.length) {
     bar?.remove();
     return;
@@ -43,10 +44,10 @@ function liftAboveCookie(bar: HTMLElement): void {
 }
 
 function cardUrl(card: Element): string {
-  let href = card.querySelector('.pcard__title a, a.pcard__cover, a[href^="/products/"]')?.getAttribute('href') ?? '';
+  let href = card.querySelector('.pcard__title a, a.pcard__cover, a[href*="/products/"]')?.getAttribute('href') ?? '';
   if (!href) return '';
   if (!href.startsWith('/')) href = location.pathname.replace(/[^/]*$/, '') + href;
-  return href.replace(/\/?$/, '/');
+  return withoutLocale(href).replace(/\/?$/, '/');
 }
 
 /** Карточкам из блоков «HTML как есть» кнопки дорисовываем (в разделах со сравнением). */
@@ -56,7 +57,7 @@ async function mountLegacyButtons(): Promise<void> {
   const sections = (await fetch('/data/compare-sections.json')
     .then((r) => (r.ok ? r.json() : []))
     .catch(() => [])) as string[];
-  if (!sections.includes(location.pathname.replace(/\/?$/, '/'))) return;
+  if (!sections.includes(withoutLocale(location.pathname).replace(/\/?$/, '/'))) return;
   for (const card of cards) {
     const url = cardUrl(card);
     const box = card.querySelector('.pcard__actions') ?? card.querySelector('.pcard__body');
