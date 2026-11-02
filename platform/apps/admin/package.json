@@ -5,9 +5,9 @@
   "type": "module",
   "description": "Админка сайта: страницы и блоки, настройки, медиатека, редиректы, наличие, заявки, пользователи, API.",
   "scripts": {
-    "dev": "next dev --port 3300 --hostname 127.0.0.1",
+    "dev": "next dev --port 3500 --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start --port 3300 --hostname 127.0.0.1",
+    "start": "next start --port 3500 --hostname 127.0.0.1",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "create-user": "tsx scripts/create-user.ts"

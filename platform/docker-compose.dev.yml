@@ -1,14 +1,14 @@
 # Инфраструктура для локальной разработки: только хранилища.
 # Сами сервисы и Next.js запускаются на хосте (npm run dev) — без сборки
 # Docker-образов, чтобы не копить build-кеш на диске C.
-# Образы — те, что уже скачаны локально (postgres:17.6, redis:7-alpine, minio).
+# Образы — те, что уже скачаны локально (postgres:17.6, redis:7-alpine).
 # Пароли базы и Redis — из .env рядом (тот же файл, что у сервисов и сервера).
-name: mtpk-dev
+name: mtpk-kz-dev
 
 services:
   postgres:
     image: ${POSTGRES_IMAGE:-postgres:17.6}
-    container_name: mtpk-dev-postgres
+    container_name: mtpk-kz-dev-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mtpk}
       POSTGRES_USER: ${POSTGRES_USER:-mtpk}
@@ -21,7 +21,7 @@ services:
       - -c
       - max_connections=80
     ports:
-      - "127.0.0.1:5442:5432"
+      - "127.0.0.1:5443:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       # служебная база для Prisma (создаётся один раз, при первом запуске тома)
@@ -35,7 +35,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: mtpk-dev-redis
+    container_name: mtpk-kz-dev-redis
     # Без записи на диск (ни RDB, ни AOF): в разработке Redis — только память.
     # noeviction — требование BullMQ (очередь заявок не должна терять задания).
     command:
@@ -53,7 +53,7 @@ services:
     environment:
       REDISCLI_AUTH: ${REDIS_PASSWORD:?задайте REDIS_PASSWORD в .env}
     ports:
-      - "127.0.0.1:6392:6379"
+      - "127.0.0.1:6393:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -61,41 +61,5 @@ services:
       retries: 20
     restart: unless-stopped
 
-  minio:
-    image: ${MINIO_IMAGE:-minio/minio:latest}
-    container_name: mtpk-dev-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: mtpk
-      MINIO_ROOT_PASSWORD: mtpk_dev_minio_password
-    ports:
-      - "127.0.0.1:9010:9000"
-      - "127.0.0.1:9011:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-    restart: unless-stopped
-
-  # Однократно создаёт бакеты: публичные ассеты сайта и приватный (вложения заявок).
-  minio-init:
-    image: ${MC_IMAGE:-minio/mc:latest}
-    container_name: mtpk-dev-minio-init
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 mtpk mtpk_dev_minio_password &&
-      mc mb --ignore-existing local/mtpk-assets &&
-      mc mb --ignore-existing local/mtpk-private &&
-      echo 'buckets ready'
-      "
-    restart: "no"
-
 volumes:
   pg_data:
-  minio_data:

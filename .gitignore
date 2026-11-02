@@ -63,3 +63,7 @@ briefs/tech-spec.md
 id_rsa*
 id_ed25519*
 .claude/settings.local.json
+
+# Копия живого uralinduktor.kz (исходник переводов, скрипт platform/scripts/kz/crawl-live.ts)
+exports/kz-live/
+exports/*.dump

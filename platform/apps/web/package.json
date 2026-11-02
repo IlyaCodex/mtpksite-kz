@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3200 --hostname 127.0.0.1",
+    "dev": "next dev --port 3400 --hostname 127.0.0.1",
     "dev:client": "tsx scripts/build-client.ts --watch",
     "build": "tsx scripts/build-client.ts && next build",
-    "start": "next start --port 3200 --hostname 127.0.0.1",
+    "start": "next start --port 3400 --hostname 127.0.0.1",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p src/legacy/tsconfig.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\""
   },
