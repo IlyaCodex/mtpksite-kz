@@ -10,7 +10,7 @@ export const env = readEnv(
     ...envParts.admin,
     LEADS_PORT: z.coerce.number().default(4102),
     /** Хосты, с которых принимаются формы (Origin/Referer) */
-    LEADS_ALLOWED_HOSTS: z.string().default('uralinduktor.ru,new.uralinduktor.ru'),
+    LEADS_ALLOWED_HOSTS: z.string().default('uralinduktor.kz,www.uralinduktor.kz'),
     /** За своим шлюзом: брать IP клиента из X-Real-IP/X-Forwarded-For */
     LEADS_TRUST_PROXY: envParts.bool,
     /** Сколько ждать доставки в CRM/почту прежде чем ответить «принято в очередь», мс */

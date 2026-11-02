@@ -49,7 +49,7 @@ export const envParts = {
   base: {
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     LOG_LEVEL: z.string().default('info'),
-    SITE_URL: z.string().default('https://uralinduktor.ru'),
+    SITE_URL: z.string().default('https://uralinduktor.kz'),
   },
   db: {
     DATABASE_URL: z.string().min(1),

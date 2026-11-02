@@ -138,6 +138,10 @@ function toKey(urlPath: string): string | null {
   return key;
 }
 
+/** Хранилище общее с основным сайтом: этот сайт пишет и удаляет только в своих папках (img/kz/…, files/kz/…). */
+const OWN_KEY = /^[^/]+\/kz\//;
+const ownKey = (key: string) => (OWN_KEY.test(key) ? key : key.replace(/^([^/]+)\//, '$1/kz/'));
+
 const ADMIN = [{ adminToken: [] }];
 const TAGS = ['Админка: медиатека'];
 const keyParam = z.object({ '*': z.string().min(1).describe('Ключ файла: img/…') });
@@ -212,8 +216,9 @@ async function adminRoutes(base: import('fastify').FastifyInstance) {
       },
     },
     async (req, reply) => {
-      const wanted = toKey(`/${req.params['*']}`);
-      if (!wanted || !Buffer.isBuffer(req.body)) return reply.code(400).send({ error: 'bad_key_or_body' });
+      const requested = toKey(`/${req.params['*']}`);
+      if (!requested || !Buffer.isBuffer(req.body)) return reply.code(400).send({ error: 'bad_key_or_body' });
+      const wanted = ownKey(requested);
       // Существующий файл не перезаписываем: браузеры и кеш шлюза держат его
       // до 30 дней, замена «на месте» до посетителей не дойдёт.
       const key = await freeKey(wanted);
@@ -237,6 +242,8 @@ async function adminRoutes(base: import('fastify').FastifyInstance) {
     async (req, reply) => {
       const key = toKey(`/${req.params['*']}`);
       if (!key) return reply.code(400).send({ error: 'bad_key' });
+      // файлы основного сайта здесь только показываются
+      if (!OWN_KEY.test(key)) return reply.code(403).send({ error: 'shared_file' });
       await removeObject(key);
       if (catalog.has(`${key}.webp`)) await removeObject(`${key}.webp`);
       await dropVariants(s3, bucket, key);

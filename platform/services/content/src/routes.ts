@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CONTENT_STREAM, isAuthorized, publishEvent, type Logger, type Redis, type ZodTypeProvider } from '@mtpk/shared';
@@ -5,7 +6,7 @@ import { classifyStyleBlock, detectTemplate, hasStockBlocks, normalizePath, reso
 import { sectionParts } from '@mtpk/content-kit/section';
 import { cssFileRecord } from '@mtpk/content-kit/styles';
 import { formatHtml } from '@mtpk/content-kit/format-html';
-import { LOCALES, translateDeep } from '@mtpk/content-kit/i18n';
+import { htmlTexts, LOCALES, normalizeText, translateDeep } from '@mtpk/content-kit/i18n';
 import { UI_STRINGS } from '@mtpk/content-kit/ui-strings';
 import { buttonDesignAttrs } from '@mtpk/content-kit/design';
 import { extractBlocksInlineStyles, rulesToCss } from '@mtpk/content-kit/inline-styles';
@@ -32,6 +33,7 @@ import { catalogNodes } from './catalog.ts';
 import { catalogAdminRoutes, catalogPageGuard } from './catalog-admin.ts';
 import { catalogDependents, loadCatalog } from './catalog-data.ts';
 import { orNotFound, Prisma, type Db } from './db.ts';
+import { seoHtml } from './render.ts';
 import { scriptJs, storeScripts } from './scripts.ts';
 import type { ContentStore } from './store.ts';
 
@@ -41,7 +43,7 @@ interface Deps {
   redis: Redis;
   log: Logger;
   adminToken: string;
-  notifyWeb: (paths: string[] | 'all') => Promise<void>;
+  notifyWeb: (paths: string[] | 'all' | 'dictionaries') => Promise<void>;
 }
 
 const pathQuery = z.object({ path: z.string().min(1).max(2048).describe('Адрес страницы: /products/…/') });
@@ -83,7 +85,14 @@ export async function publicRoutes(base: FastifyInstance, { store, db }: Deps) {
   );
   app.get('/v1/data/ui-strings.json', { schema: { tags: ['Сайт'], summary: 'Словарь строк из скриптов сайта (client/i18n.ts)', querystring: localeQuery } }, async (req, reply) => {
     const dict = await store.dictionary(req.query.locale);
-    const rows = UI_STRINGS.flatMap((s) => {
+    const strings = new Set(UI_STRINGS);
+    const walk = (v: unknown): void => {
+      if (typeof v === 'string') htmlTexts(v).forEach((t) => strings.add(t));
+      else if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+    };
+    walk(await store.settings());
+    const rows = [...strings].flatMap((s) => {
       const target = dict.get(s);
       return target === undefined ? [] : [[s, target]];
     });
@@ -853,6 +862,95 @@ export async function adminRoutes(base: FastifyInstance, deps: Deps) {
         await notifyWeb(pages);
       }
       return { ok: true, groups: groups.length, items: items.length };
+    },
+  );
+
+  // ── Переводы ─────────────────────────────────────────────
+  const translationLocale = z.enum(['kz', 'en']);
+  const translationQuery = z.object({
+    locale: translationLocale,
+    search: z.string().max(200).optional(),
+    offset: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce.number().int().min(1).max(500).default(100),
+  });
+  app.get(
+    '/admin/v1/translations',
+    { schema: { tags: ['Админка: переводы'], summary: 'Словарь языка', querystring: translationQuery, security: ADMIN } },
+    async (req) => {
+      const { locale, search, offset, limit } = req.query;
+      const where: Prisma.TranslationWhereInput = {
+        locale,
+        ...(search ? { OR: [{ source: { contains: search, mode: 'insensitive' } }, { target: { contains: search, mode: 'insensitive' } }] } : {}),
+      };
+      const [total, items] = await Promise.all([
+        db.translation.count({ where }),
+        db.translation.findMany({ where, orderBy: { source: 'asc' }, skip: offset, take: limit, select: { source: true, target: true, origin: true } }),
+      ]);
+      return { total, items };
+    },
+  );
+  app.get(
+    '/admin/v1/translations/missing',
+    {
+      schema: {
+        tags: ['Админка: переводы'],
+        summary: 'Строки без перевода: страница, надписи скриптов (ui) или шапка и подвал (settings)',
+        querystring: z.object({ locale: translationLocale, scope: z.string().max(500) }),
+        security: ADMIN,
+      },
+    },
+    async (req, reply) => {
+      const { locale, scope } = req.query;
+      const dict = await store.dictionary(locale);
+      const strings = new Set<string>();
+      const add = (text: string) => {
+        const key = normalizeText(text);
+        if (/[А-Яа-яЁё]/.test(key)) strings.add(key);
+      };
+      const addHtml = (html: string) => htmlTexts(html).forEach(add);
+      if (scope === 'ui') UI_STRINGS.forEach(add);
+      else if (scope === 'settings') {
+        const walk = (v: unknown): void => {
+          if (typeof v === 'string') addHtml(v);
+          else if (Array.isArray(v)) v.forEach(walk);
+          else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+        };
+        walk(await store.settings());
+      } else {
+        const page = await db.page.findUnique({ where: { path: normalizePath(scope) } });
+        if (!page) return reply.code(404).send({ error: 'not_found' });
+        add(page.title);
+        if (page.description) add(page.description);
+        addHtml(seoHtml(page));
+      }
+      const items = [...strings].filter((s) => !dict.has(s)).map((source) => ({ source, target: '', origin: '' }));
+      return { total: items.length, items };
+    },
+  );
+  app.put(
+    '/admin/v1/translations',
+    {
+      schema: {
+        tags: ['Админка: переводы'],
+        summary: 'Сохранить перевод строки (пустой — убрать)',
+        body: z.object({ locale: translationLocale, source: z.string().min(1), target: z.string() }),
+        security: ADMIN,
+      },
+    },
+    async (req) => {
+      const { locale, target } = req.body;
+      const source = normalizeText(req.body.source);
+      const hash = crypto.createHash('sha1').update(source).digest('hex');
+      if (target.trim()) {
+        const data = { source, target: normalizeText(target), origin: 'manual' };
+        await db.translation.upsert({ where: { locale_hash: { locale, hash } }, create: { locale, hash, ...data }, update: data });
+      } else {
+        await db.translation.deleteMany({ where: { locale, hash } });
+      }
+      store.resetDictionaries();
+      // страницы подхватят перевод при следующей перегенерации (до часа) или по кнопке «Обновить страницы»
+      await notifyWeb('dictionaries');
+      return { ok: true };
     },
   );
 

@@ -6,7 +6,7 @@ import { extraLines } from './fields.ts';
  * строк — как в send.php: менеджеры и автоматизации CRM привыкли к нему.
  */
 
-export const MAIL_SUBJECT = 'Новая заявка с сайта uralinduktor.ru';
+export const MAIL_SUBJECT = 'Новая заявка с сайта uralinduktor.kz';
 
 function fmtTime(d: Date): string {
   // Время сервера в Екатеринбурге (UTC+5) — как date('Y-m-d H:i:s') на VPS
@@ -21,7 +21,7 @@ function traceLine(lead: Lead): string | null {
 
 export function emailBody(lead: Lead): string {
   const utm = (lead.utm ?? {}) as Record<string, string>;
-  const lines = ['Новая заявка с сайта uralinduktor.ru', '────────────────────────────', `Телефон: ${lead.phone}`];
+  const lines = ['Новая заявка с сайта uralinduktor.kz', '────────────────────────────', `Телефон: ${lead.phone}`];
   if (lead.name) lines.push(`Имя: ${lead.name}`);
   if (lead.email) lines.push(`Email: ${lead.email}`);
   if (lead.task) lines.push(`Задача: ${lead.task}`);

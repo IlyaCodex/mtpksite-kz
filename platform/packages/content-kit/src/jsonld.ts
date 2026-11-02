@@ -5,7 +5,7 @@
 import { decodeEntities } from './html.ts';
 import type { StockOffer } from './stock.ts';
 
-export const DEFAULT_SITE = 'https://uralinduktor.ru';
+export const DEFAULT_SITE = 'https://uralinduktor.kz';
 
 // Крошки на сайте размечены несколькими способами — исторически, разными пакетами:
 //   каталог    <nav class="breadcrumb">  …  <span class="breadcrumb__current">

@@ -673,6 +673,9 @@ async function cleanup(): Promise<void> {
 
   // адреса: со страниц живого сайта, которых нет здесь, и старые перенаправления — на существующие страницы
   const paths = new Set((await db.page.findMany({ where: { status: 'published' }, select: { path: true } })).map((p) => p.path));
+  // страницы, которые на основном сайте убраны в перенаправления (кейсы живого .kz), здесь есть
+  const shadowing = await db.redirect.deleteMany({ where: { fromPath: { in: [...paths] } } });
+  if (shadowing.count) console.log(`перенаправлений поверх страниц убрано: ${shadowing.count}`);
   const redirects = await db.redirect.findMany({ select: { id: true, fromPath: true, toPath: true } });
   const taken = new Set(redirects.map((r) => r.fromPath));
   let moved = 0;

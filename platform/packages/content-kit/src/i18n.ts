@@ -89,6 +89,9 @@ export function pageTexts(nodes: Node[]): PageText[] {
   return out;
 }
 
+/** Строки куска HTML: те, что переводит localizeHtml. */
+export const htmlTexts = (html: string): string[] => pageTexts(parseFragment(html).childNodes as Node[]).map((t) => t.text);
+
 /** Разметка страницы (JSON-LD) на языке: подписи — по словарю, адреса сайта — с приставкой языка. */
 export function localizeJsonLd<T>(json: T, locale: Locale, dict: Dictionary, site: string): T {
   const value = (v: unknown, key: string): unknown => {

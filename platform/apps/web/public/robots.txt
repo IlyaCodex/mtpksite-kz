@@ -1,5 +1,5 @@
 # =====================================================================
-# УралИндуктор / МТПК — uralinduktor.ru
+# УралИндуктор — uralinduktor.kz
 # =====================================================================
 # Сайт в публичном доступе, индексация разрешена.
 # =====================================================================
@@ -16,10 +16,17 @@ User-agent: Perplexity-User
 User-agent: Claude-SearchBot
 User-agent: Claude-User
 Allow: /
-# Служебные адреса: формы, поиск, внутренние адреса статей Практикума (их страницы —
-# /praktikum/…), переходы из писем рассылок — в поиске им делать нечего.
+# Служебные адреса: формы, поиск — в поиске им делать нечего.
 Disallow: /api/
-Disallow: /r/
+# Проекты закрыты от индекса, кроме двух кейсов — как на прежнем сайте.
+Disallow: /*/proekty
+Disallow: /proekty
+Allow: /ru/proekty/postavka-ui-1t-800kw-uig-80t-pavlodar/
+Allow: /kz/proekty/postavka-ui-1t-800kw-uig-80t-pavlodar/
+Allow: /en/proekty/postavka-ui-1t-800kw-uig-80t-pavlodar/
+Allow: /ru/proekty/postavka-drobemetnoy-ustanovki-uid-3210-rybinsk/
+Allow: /kz/proekty/postavka-drobemetnoy-ustanovki-uid-3210-rybinsk/
+Allow: /en/proekty/postavka-drobemetnoy-ustanovki-uid-3210-rybinsk/
 
 # Рекламные и аналитические метки не меняют содержимое страницы. Директива
 # Яндекса Clean-param склеивает такие адреса с чистым URL, иначе одна страница
@@ -32,4 +39,4 @@ Clean-param: ysclid&_openstat&etext&utm_referrer&gbraid&wbraid&cm_id
 # Карта сайта (строит сайт из списка страниц): sitemap-index.xml → sitemap-0.xml.
 # Отдельной копии по адресу /sitemap.xml больше нет — сайт отдаёт на ней 301
 # на индекс, чтобы одни и те же адреса не публиковались двумя файлами.
-Sitemap: https://uralinduktor.ru/sitemap-index.xml
+Sitemap: https://uralinduktor.kz/sitemap-index.xml

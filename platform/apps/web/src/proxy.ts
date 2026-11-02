@@ -3,7 +3,7 @@ import { DEFAULT_LOCALE, splitLocalePath } from '@mtpk/content-kit/i18n';
 import type { PageListItem, RedirectDto } from '@mtpk/shared/contracts';
 
 const CONTENT = process.env.CONTENT_URL ?? 'http://127.0.0.1:4101';
-const SITE = (process.env.SITE_URL ?? 'https://uralinduktor.ru').replace(/\/$/, '');
+const SITE = (process.env.SITE_URL ?? 'https://uralinduktor.kz').replace(/\/$/, '');
 const TTL_MS = 60_000;
 
 /**

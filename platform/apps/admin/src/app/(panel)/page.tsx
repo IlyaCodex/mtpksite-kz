@@ -46,7 +46,6 @@ const SERVICES: { id: Service; label: string }[] = [
   { id: 'leads', label: 'Заявки' },
   { id: 'media', label: 'Медиа' },
   { id: 'search', label: 'Поиск' },
-  { id: 'mailing', label: 'Рассылки' },
 ];
 
 /** Данные одного источника; недоступен — null (карточка покажет прочерк). */
@@ -181,7 +180,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         )
       : null,
     Promise.all(SERVICES.map(async (s) => ({ ...s, ...(await health(s.id)) }))),
-    can(user, 'mailing') ? safe(serviceJson<MailingSummary>('mailing', 'summary', { user })) : null,
+    null as MailingSummary | null, // рассылок на этом сайте нет
   ]);
   const count = (...t: string[]) => t.reduce((s, x) => s + (templates?.find((r) => r.template === x)?.count ?? 0), 0);
   const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ });

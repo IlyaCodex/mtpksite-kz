@@ -43,8 +43,8 @@ async function sendMail(lead: Lead, loadAttachment: () => Promise<CrmAttachment>
     attachments.push({ filename: file.name, content: file.data });
   }
   const info = await transport.sendMail({
-    from: { name: 'Сайт Уралиндуктор', address: env.MAIL_FROM || env.SMTP_USER || 'site@uralinduktor.ru' },
-    to: env.MAIL_TO || 'info@uralinduktor.ru',
+    from: { name: 'Сайт Уралиндуктор', address: env.MAIL_FROM || env.SMTP_USER || 'site@uralinduktor.kz' },
+    to: env.MAIL_TO || 'stasgross.ru@gmail.com',
     replyTo: lead.email || undefined,
     subject: MAIL_SUBJECT,
     text: emailBody(lead),

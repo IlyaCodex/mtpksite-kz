@@ -22,13 +22,13 @@ const store = new ContentStore(db, cache, env.SITE_URL, env.CONTENT_CACHE_TTL, l
 log.info({ keys: await store.purge() }, 'кеш страниц сброшен при запуске');
 
 /** Сигнал сайту: перегенерировать изменённые страницы (ISR Next.js). */
-async function notifyWeb(paths: string[] | 'all'): Promise<void> {
+async function notifyWeb(paths: string[] | 'all' | 'dictionaries'): Promise<void> {
   if (!env.WEB_URL || !env.REVALIDATE_SECRET) return;
   try {
     await fetch(`${env.WEB_URL}/api/revalidate`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-revalidate-secret': env.REVALIDATE_SECRET },
-      body: JSON.stringify(paths === 'all' ? { all: true } : { paths }),
+      body: JSON.stringify(paths === 'dictionaries' ? { dictionaries: true } : paths === 'all' ? { all: true, dictionaries: true } : { paths }),
       signal: AbortSignal.timeout(5000),
     });
   } catch (err) {

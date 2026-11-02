@@ -1,5 +1,5 @@
 # ============================================================================
-# Продакшн-стек uralinduktor.ru (VPS). Настройки — один файл .env рядом (тот же, что
+# Продакшн-стек uralinduktor.kz (VPS). Настройки — один файл .env рядом (тот же, что
 # локально, platform/.env: compose берёт из него только нужное, адреса сервисов — свои):
 #   docker compose config -q          (проверка: все обязательные переменные заданы)
 #   docker compose build
@@ -16,7 +16,7 @@ name: mtpk
 x-node-env: &node-env
   NODE_ENV: production
   LOG_LEVEL: ${LOG_LEVEL:-info}
-  SITE_URL: ${SITE_URL:-https://uralinduktor.ru}
+  SITE_URL: ${SITE_URL:-https://uralinduktor.kz}
   DATABASE_URL: postgres://${POSTGRES_USER:-mtpk}:${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mtpk}
   REDIS_URL: redis://:${REDIS_PASSWORD:?задайте REDIS_PASSWORD}@redis:6379
   S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
@@ -71,7 +71,6 @@ services:
       content: { condition: service_healthy }
       search: { condition: service_healthy }
       leads: { condition: service_healthy }
-      mailing: { condition: service_healthy }
       admin: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/__gateway_health"]
@@ -90,7 +89,7 @@ services:
     environment:
       NODE_ENV: production
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      SITE_URL: ${SITE_URL:-https://uralinduktor.ru}
+      SITE_URL: ${SITE_URL:-https://uralinduktor.kz}
       CONTENT_URL: http://content:4101
       SEARCH_URL: http://search:4103
       MEDIA_URL: http://media:4104
@@ -106,7 +105,7 @@ services:
     deploy:
       resources: { limits: { cpus: "1.5", memory: 768M } }
 
-  # ── Админка (Next.js): uralinduktor.ru/admin, вход по секретной ссылке ─────
+  # ── Админка (Next.js): uralinduktor.kz/admin, вход по секретной ссылке ─────
   admin:
     build: { context: ., dockerfile: infra/docker/admin.Dockerfile }
     image: mtpk/admin:${IMAGE_TAG:-latest}
@@ -119,7 +118,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       # ссылки «открыть на сайте» и стили предпросмотра в браузере — публичный адрес
-      PUBLIC_SITE_URL: ${SITE_URL:-https://uralinduktor.ru}
+      PUBLIC_SITE_URL: ${SITE_URL:-https://uralinduktor.kz}
       ADMIN_SECURE_COOKIE: "true"
     depends_on:
       content: { condition: service_healthy }
@@ -199,7 +198,7 @@ services:
     environment: &leads-env
       <<: *node-env
       LEADS_PORT: 4102
-      LEADS_ALLOWED_HOSTS: ${LEADS_ALLOWED_HOSTS:-uralinduktor.ru,new.uralinduktor.ru}
+      LEADS_ALLOWED_HOSTS: ${LEADS_ALLOWED_HOSTS:-uralinduktor.kz,www.uralinduktor.kz}
       LEADS_TRUST_PROXY: "true"
       MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -235,7 +234,9 @@ services:
       resources: { limits: { cpus: "0.5", memory: 256M } }
 
   # ── Рассылки: базы адресов, письма, переходы (/r/…) и отправитель ─────────
+  # На этом сайте рассылок нет: контейнеры включаются только профилем mailing.
   mailing:
+    profiles: [mailing]
     build:
       context: .
       dockerfile: infra/docker/service.Dockerfile
@@ -266,6 +267,7 @@ services:
       resources: { limits: { cpus: "0.5", memory: 384M } }
 
   mailing-worker:
+    profiles: [mailing]
     build:
       context: .
       dockerfile: infra/docker/service.Dockerfile

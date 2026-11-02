@@ -210,7 +210,7 @@ async function handle(req: FastifyRequest, reply: FastifyReply) {
 
   if (attachment) {
     // Приватный оригинал хранится до доставки письма и файла в CRM (либо намеренного пропуска CRM).
-    const key = `leads/${row.id}/${attachment.name}`;
+    const key = `leads/kz/${row.id}/${attachment.name}`; // бакет общий с основным сайтом
     try {
       await putObject(s3, env.S3_BUCKET_PRIVATE, key, attachment.data, 'application/octet-stream');
       await db.lead.update({ where: { id: row.id }, data: { attachmentKey: key } });

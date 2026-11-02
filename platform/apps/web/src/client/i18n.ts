@@ -1,11 +1,11 @@
-import { isLocale, localizeHref, normalizeText, translateText, type Dictionary, type Locale } from '@mtpk/content-kit/locale';
+import { isLocale, LANG_CODE, localizeHref, normalizeText, translateText, type Dictionary, type Locale } from '@mtpk/content-kit/locale';
 
 /**
  * Язык в браузере. Страница приходит уже переведённой (content-kit/i18n.ts), но скрипты вставляют и свои куски:
  * таблицу сравнения, окно поиска, подсказки форм — с русским текстом и адресами без языка. Вставленное приводится
  * к языку страницы сразу, до отрисовки: адреса — всегда, текст — по словарю /data/ui-strings.json (список — в
  * content-kit/ui-strings.ts; грузится, когда встретилась первая такая строка; у русской версии словаря нет).
- * Строка с числами («Найдено: 5») ищется и как шаблон «Найдено: {n}».
+ * Строка с числами («Найдено: 5») ищется и как шаблон «Найдено: {n}». Словарь — и шапка с подвалом: они нужны странице 404.
  */
 const CYRILLIC = /[А-Яа-яЁё]/;
 const TEXT_ATTRS = ['alt', 'title', 'placeholder', 'aria-label'];
@@ -88,6 +88,14 @@ export function initI18n(): void {
   };
 
   const hasRussian = (node: Node) => CYRILLIC.test(node.nodeType === Node.ELEMENT_NODE ? (node as Element).outerHTML : (node.nodeValue ?? ''));
+
+  // страница 404 одна на все языки (русская): на /kz/ и /en/ — целиком здесь
+  if (needsText && document.documentElement.dataset.locale !== locale) {
+    document.documentElement.lang = LANG_CODE[locale];
+    document.documentElement.dataset.locale = locale;
+    fixLinks(document.body);
+    translate(document.body);
+  }
 
   new MutationObserver((records) => {
     for (const record of records) {

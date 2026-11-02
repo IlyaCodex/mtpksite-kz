@@ -6,14 +6,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseFragment } from 'parse5';
 import ts from 'typescript';
-import { pageTexts } from '@mtpk/content-kit/i18n';
+import { htmlTexts } from '@mtpk/content-kit/i18n';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-const DIRS = ['apps/web/src/client', 'apps/web/src/legacy'];
+const DIRS = ['apps/web/src/client', 'apps/web/src/legacy', 'apps/web/src/components/layout', 'packages/ui/src/forms'];
 /** Только для тех, кто вошёл в админку; статьи Практикума (на этом сайте их нет); данные карты — свой файл на каждый язык. */
-const SKIP = /(?:admin-bar|doc-bar|thermal-guide|inductor-guide|made-badges|projects-data|globals\.d)\b/;
+const SKIP = /(?:admin-bar|doc-bar|thermal-guide|inductor-guide|made-badges|projects-data|cases-data|globals\.d)\b/;
 /** Строки, склеенные скриптом из частей, ответы сервиса заявок; {n} — число (client/i18n.ts). */
 const EXTRA = [
   'Браузер не поддерживает защищённую отправку. Позвоните: +7 (775) 853-40-95',
@@ -47,13 +46,14 @@ const CYRILLIC = /[А-Яа-яЁё]/;
 const literals = new Set<string>();
 for (const dir of DIRS) {
   for (const name of fs.readdirSync(path.join(ROOT, dir), { recursive: true }) as string[]) {
-    if (!name.endsWith('.ts') || name.endsWith('.test.ts') || SKIP.test(name)) continue;
+    if (!/\.tsx?$/.test(name) || name.endsWith('.test.ts') || SKIP.test(name)) continue;
     const file = path.join(ROOT, dir, name);
     const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
     const walk = (node: ts.Node) => {
       if (ts.isStringLiteralLike(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node)) {
         if (CYRILLIC.test(node.text)) literals.add(node.text);
       }
+      if (ts.isJsxText(node) && CYRILLIC.test(node.text)) literals.add(node.text);
       ts.forEachChild(node, walk);
     };
     walk(source);
@@ -65,7 +65,7 @@ const strings = new Set<string>(EXTRA);
 for (const literal of literals) {
   // кусок разметки из склейки ('…">Текст') — начало до первого закрытого тега отрезает сам разбор
   const clean = literal.replace(/^[^<]*?["']\s*>/, '');
-  for (const { text } of pageTexts(parseFragment(clean).childNodes)) if (CYRILLIC.test(text)) strings.add(text);
+  for (const text of htmlTexts(clean)) if (CYRILLIC.test(text)) strings.add(text);
 }
 
 const list = [...strings].sort((a, b) => a.localeCompare(b, 'ru'));
