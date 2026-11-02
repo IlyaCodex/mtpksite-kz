@@ -126,6 +126,9 @@
   берёт иконку и подпись у пункта мегаменю с тем же адресом). Новый вид элемента — правка компонента; стили
   мобильного меню — `apps/web/public/css/mobile-fixes.css` (раздел 5). `design/prototypes/_partials` — прототипы
   эпохи Astro, сайтом не используются.
+- Карта без рекламы («Контакты») — Leaflet и плитки OpenStreetMap, модуль `client/free-map.ts`: в HTML-блоке
+  `<div class="free-map" data-free-map='[{"ll":[51.1605,71.4278]}]' data-zoom="16">`, рядом своя метка `.kz-map__pin` (её текст переводит словарь) и
+  щит `.kz-map__lock`; плитки — в CSP шлюза. В «О компании» пока виджет Яндекса.
 - Иконки SVG в блоках — окно «Иконка и цвет» (`apps/admin/src/components/icon-picker.tsx`), набор Solar —
   `apps/admin/public/icons/solar-linear.json` (`scripts/icons-solar.ts`); цвет — `style="color:…"` у `<svg>`
   (в HTML-секциях при сохранении остаётся на месте, в класс не уходит).

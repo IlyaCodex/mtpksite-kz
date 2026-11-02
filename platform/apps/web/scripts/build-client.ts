@@ -46,6 +46,8 @@ const ENTRIES: Record<string, string> = {
   'doc-bar': 'src/client/doc-bar.ts',
   // эффект праздничной обложки главной (снег, искры…) — только в дни праздника
   'holiday-fx': 'src/client/holiday-fx.ts',
+  // карта без рекламы (Leaflet, OpenStreetMap): страницы с блоком data-free-map
+  'free-map': 'src/client/free-map.ts',
 };
 
 /**
@@ -176,6 +178,8 @@ const modules: BuildOptions = {
   chunkNames: 'chunks/[name]-[hash]',
   bundle: true,
   splitting: true,
+  // стили библиотеки карты — текстом: модуль вставляет их сам, только на странице с картой
+  loader: { '.css': 'text' },
   format: 'esm',
   platform: 'browser',
   target: TARGET,

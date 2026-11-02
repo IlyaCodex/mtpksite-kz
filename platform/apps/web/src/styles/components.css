@@ -1154,3 +1154,31 @@ a.bo-item__value:focus-visible { outline: none; }
   .lang-btn { padding: 3px 5px; }
   .lang-code { display: none; }
 }
+
+/* Карта без рекламы (client/free-map.ts): метка — кружок и подпись на белой плашке */
+.free-map { position: absolute; inset: 0; z-index: 0; background: var(--surface-subtle); }
+.free-map__marker { width: 0; height: 0; }
+.free-map__pin {
+  position: absolute;
+  left: -11px;
+  top: -13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  background: var(--surface-page);
+  box-shadow: 0 2px 8px rgba(16, 31, 38, .28);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  line-height: 18px;
+  white-space: nowrap;
+}
+.free-map__dot { width: 14px; height: 14px; border: 3px solid var(--green-500, #4caf50); border-radius: 50%; background: #fff; flex-shrink: 0; }
+.free-map__pin.is-main { font-weight: var(--fw-bold, 700); }
+.free-map__pin.is-dot { gap: 0; padding: 3px; font-size: 0; cursor: pointer; }
+.free-map__pin.is-left { left: auto; right: -11px; flex-direction: row-reverse; padding: 3px 4px 3px 10px; }
+.free-map__pin.is-main .free-map__dot { background: var(--green-500, #4caf50); }
+.free-map .leaflet-popup-content { font-family: var(--font-body); font-size: 13px; line-height: 1.45; margin: 10px 14px; }

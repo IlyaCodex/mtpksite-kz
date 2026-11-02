@@ -123,3 +123,6 @@ html[data-theme="dark"] .pcard__zoom { background: rgba(17, 24, 27, 0.88); color
 
 /* блок «Контакты»: декоративный значок документов — едва заметный, как в светлой теме */
 html[data-theme="dark"] .bo-panel__deco { opacity: 0.3; }
+
+/* Карта (client/free-map.ts): плитки OpenStreetMap светлые — приглушаем */
+html[data-theme="dark"] .free-map .leaflet-tile { filter: brightness(.72) contrast(1.05) saturate(.75); }

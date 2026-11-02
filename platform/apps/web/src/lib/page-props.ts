@@ -42,6 +42,7 @@ export function pageModules(blocks: Block[], holiday: ActiveHoliday | null = nul
     // запчасти: окно «Запросить цену / подбор» (карточка детали и списки) и фото на весь экран
     // (у транзисторных запчастей — только оно)
     if (b.type === 'html' && /id="(?:request|image)-dialog"/.test(b.html)) need.add('spare');
+    if (b.type === 'html' && b.html.includes('data-free-map')) need.add('free-map');
     if (b.type === 'catalogList') need.add('catalog-filter');
     if (b.type === 'carousel' && b.slides.length > 1) need.add('carousel');
     if (b.type === 'gallery' && b.zoom && b.photos.length) need.add('lightbox');
