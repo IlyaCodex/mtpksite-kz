@@ -95,7 +95,8 @@ export async function proxy(req: NextRequest) {
   const s = await getState();
 
   if (!locale) {
-    if (isFile) return NextResponse.next();
+    // сюда приходит и внутренний адрес страницы «не найдена» (ниже, «Спасибо» без заявки)
+    if (isFile || /^\/404\/?$/.test(decoded)) return NextResponse.next();
     const known = s?.redirects.get(decoded);
     const target = known ? known.to : decoded.endsWith('/') ? decoded : `${decoded}/`;
     return redirect(target.startsWith('http') ? target : `/${DEFAULT_LOCALE}${encodeURI(target)}${search}`, req, known?.code ?? 301);

@@ -41,7 +41,7 @@ export function initI18n(): void {
 
   const translateNode = (node: Node, d: Dictionary) => {
     if (node.nodeType === Node.TEXT_NODE) {
-      if (node.parentElement && SKIP.has(node.parentElement.tagName)) return;
+      if (node.parentElement && (SKIP.has(node.parentElement.tagName) || node.parentElement.closest('[translate="no"]'))) return;
       const value = node.nodeValue ?? '';
       if (CYRILLIC.test(value)) {
         const next = translateAny(value, d);
@@ -51,6 +51,7 @@ export function initI18n(): void {
     }
     const root = node as Element;
     for (const el of [root, ...root.querySelectorAll('*')]) {
+      if (el.closest('[translate="no"]')) continue;
       for (const name of TEXT_ATTRS) {
         const value = el.getAttribute(name);
         if (value && CYRILLIC.test(value)) {
@@ -93,7 +94,7 @@ export function initI18n(): void {
   if (needsText && document.documentElement.dataset.locale !== locale) {
     document.documentElement.lang = LANG_CODE[locale];
     document.documentElement.dataset.locale = locale;
-    fixLinks(document.body);
+    for (const a of document.querySelectorAll('a[href^="/ru"]')) a.setAttribute('href', (a.getAttribute('href') ?? '').replace(/^\/ru(?=\/|$)/, `/${locale}`));
     translate(document.body);
   }
 

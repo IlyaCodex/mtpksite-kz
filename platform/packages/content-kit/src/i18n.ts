@@ -30,7 +30,7 @@ const childrenOf = (n: Element): Node[] =>
 function walk(nodes: Node[], visitText: (n: TextNode) => void, visitElement: (el: Element) => void): void {
   for (const n of nodes) {
     if (isText(n)) visitText(n);
-    else if (isElement(n) && !SKIP.has(n.tagName)) {
+    else if (isElement(n) && !SKIP.has(n.tagName) && !n.attrs.some((a) => a.name === 'translate' && a.value === 'no')) {
       visitElement(n);
       walk(childrenOf(n), visitText, visitElement);
     }

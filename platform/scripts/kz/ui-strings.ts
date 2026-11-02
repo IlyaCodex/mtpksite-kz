@@ -12,7 +12,7 @@ import { htmlTexts } from '@mtpk/content-kit/i18n';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const DIRS = ['apps/web/src/client', 'apps/web/src/legacy', 'apps/web/src/components/layout', 'packages/ui/src/forms'];
 /** Только для тех, кто вошёл в админку; статьи Практикума (на этом сайте их нет); данные карты — свой файл на каждый язык. */
-const SKIP = /(?:admin-bar|doc-bar|thermal-guide|inductor-guide|made-badges|projects-data|cases-data|globals\.d)\b/;
+const SKIP = /(?:admin-bar|doc-bar|thermal-guide|inductor-guide|made-badges|projects-data|cases-data|LangSwitch|globals\.d)\b/;
 /** Строки, склеенные скриптом из частей, ответы сервиса заявок; {n} — число (client/i18n.ts). */
 const EXTRA = [
   'Браузер не поддерживает защищённую отправку. Позвоните: +7 (775) 853-40-95',
