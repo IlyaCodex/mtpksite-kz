@@ -90,7 +90,7 @@ async function worker() {
     const title = head && find(head, 'title');
     if (title) take(page, normalizeText((title.childNodes as DefaultTreeAdapterMap['textNode'][]).map((c) => c.value).join('')));
     for (const c of (head?.childNodes ?? []) as Node[]) {
-      if (isElement(c) && c.tagName === 'meta' && c.attrs.some((a) => a.name === 'description')) take(page, normalizeText(c.attrs.find((a) => a.name === 'content')?.value ?? ''));
+      if (isElement(c) && c.tagName === 'meta' && c.attrs.some((a) => a.name === 'name' && a.value === 'description')) take(page, normalizeText(c.attrs.find((a) => a.name === 'content')?.value ?? ''));
     }
     for (const c of (head?.childNodes ?? []) as Node[]) {
       if (isElement(c) && c.tagName === 'script' && c.attrs.some((x) => x.name === 'type' && x.value === 'application/ld+json')) {
