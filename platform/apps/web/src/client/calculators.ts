@@ -20,6 +20,8 @@ interface Equipment {
 type State = 'example' | 'own' | 'model';
 
 const lang = () => document.documentElement.lang || 'ru';
+/** Запись чисел и дат: у казахского она как у русского, а данных kk в браузерах часто нет (выходило бы «24,500»). */
+const numberLang = () => (lang() === 'kk' ? 'ru' : lang());
 const text = (el: Element | null) => (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
 function initPanel(panel: HTMLElement, equipment: Equipment[]) {
@@ -69,7 +71,7 @@ function initPanel(panel: HTMLElement, equipment: Equipment[]) {
     panel.classList.toggle('is-invalid', !result.ok);
     $('[data-calc-invalid]', panel)!.hidden = result.ok;
     for (const out of $$<HTMLOutputElement>('output[data-out]', panel)) {
-      out.textContent = result.ok ? formatNumber(result.values[out.dataset.out!] ?? 0, Number(out.dataset.digits ?? 3), lang()) : '—';
+      out.textContent = result.ok ? formatNumber(result.values[out.dataset.out!] ?? 0, Number(out.dataset.digits ?? 3), numberLang()) : '—';
     }
     const bars = $$('[data-bar]', panel);
     const peak = result.ok ? Math.max(0, ...bars.map((b) => result.values[b.dataset.bar!] ?? 0)) : 0;
@@ -138,7 +140,7 @@ function initPanel(panel: HTMLElement, equipment: Equipment[]) {
 
   /** Расчёт текстом: исходные данные и результат — подписи как на странице. */
   function summary(): string {
-    const lines = [text($('.calc__tab.is-active') ?? null) || def.title, new Date().toLocaleDateString(lang())];
+    const lines = [text($('.calc__tab.is-active') ?? null) || def.title, new Date().toLocaleDateString(numberLang())];
     const e = chosen();
     if (e && model) lines.push(`${text(model.labels?.[0] ?? null)}: ${e.name} — ${new URL(localized(e.url), location.origin).href}`);
     lines.push('', text($('.calc__form-head .calc__h2', panel)));
@@ -181,8 +183,8 @@ function initPanel(panel: HTMLElement, equipment: Equipment[]) {
   for (const box of $$('[data-field]', form)) {
     const field = $<HTMLInputElement>('input', box)!;
     const [lo, hi] = $$(':scope > .calc__error > span:not(.calc__error-int)', box);
-    if (lo) lo.textContent = formatNumber(Number(field.min), 4, lang());
-    if (hi) hi.textContent = formatNumber(Number(field.max), 4, lang());
+    if (lo) lo.textContent = formatNumber(Number(field.min), 4, numberLang());
+    if (hi) hi.textContent = formatNumber(Number(field.max), 4, numberLang());
   }
 
   applyModel();
