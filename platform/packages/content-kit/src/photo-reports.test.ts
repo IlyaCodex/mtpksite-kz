@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { photoReportMonth, photoReportPlace, type Block, type PhotoReport } from '@mtpk/content-model';
+import { photoReportMonth, photoReportPlace, photoReportRegions, photoReportsRegionFirst, type Block, type PhotoReport } from '@mtpk/content-model';
 import { hasPhotoReportBlocks, resolvePhotoReportBlocks } from './photo-reports.ts';
 
 const report = (over: Partial<PhotoReport>): PhotoReport => ({
@@ -16,7 +16,7 @@ const report = (over: Partial<PhotoReport>): PhotoReport => ({
   videos: [],
   ...over,
 });
-const block = { type: 'photoReports', head: { title: 'Фотоотчёты' }, pageSize: 8, more: 'Показать ещё' } as Block;
+const block = { type: 'photoReports', head: { title: 'Фотоотчёты' }, pageSize: 8, region: 'Москва и Московская область' } as Block;
 
 test('блок получает отчёты: без скрытых и без фото, новые сверху', () => {
   const items = [
@@ -35,6 +35,27 @@ test('блок в контейнере тоже находится и запол
   assert.equal(hasPhotoReportBlocks([{ type: 'text', text: 'x' } as Block]), false);
   const [out] = resolvePhotoReportBlocks([container], [report({ id: 'a' })]) as unknown as { children: { items?: PhotoReport[] }[] }[];
   assert.equal(out.children[0].items?.length, 1);
+});
+
+test('выбор региона: Москва с областью — одной строкой и первой, остальные по алфавиту; отчёты региона — первыми', () => {
+  const items = [
+    report({ id: 'kurgan', region: 'Курганская область' }),
+    report({ id: 'msk', region: 'Москва' }),
+    report({ id: 'none', region: '' }),
+    report({ id: 'mo', region: 'Московская область' }),
+    report({ id: 'altai', region: 'Алтайский край' }),
+  ];
+  assert.deepEqual(
+    photoReportRegions(items).map((g) => [g.label, g.count]),
+    [
+      ['Москва и Московская область', 2],
+      ['Алтайский край', 1],
+      ['Курганская область', 1],
+    ],
+  );
+  assert.deepEqual(photoReportsRegionFirst(items, 'Москва и Московская область').map((r) => r.id), ['msk', 'mo', 'kurgan', 'none', 'altai']);
+  assert.deepEqual(photoReportsRegionFirst(items, 'Алтайский край').map((r) => r.id), ['altai', 'kurgan', 'msk', 'none', 'mo']);
+  assert.deepEqual(photoReportsRegionFirst(items, '').map((r) => r.id), ['kurgan', 'msk', 'none', 'mo', 'altai']);
 });
 
 test('плашка и место: месяц с годом, регион и город', () => {

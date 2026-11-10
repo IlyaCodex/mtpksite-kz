@@ -75,3 +75,35 @@ export function sitePhotoReports(items: PhotoReport[]): PhotoReport[] {
     .filter((r) => !r.hidden && r.photos.length)
     .sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 }
+
+/** Регионы, которые в выборе идут одной строкой. */
+const REGION_GROUPS: Record<string, string[]> = { 'Москва и Московская область': ['Москва', 'Московская область'] };
+
+export interface PhotoReportRegion {
+  label: string;
+  /** регионы отчётов под этой строкой выбора */
+  regions: string[];
+  count: number;
+}
+
+/** Строки выбора региона: группы, у которых есть отчёты, затем остальные регионы по алфавиту. */
+export function photoReportRegions(items: PhotoReport[]): PhotoReportRegion[] {
+  const counts = new Map<string, number>();
+  for (const r of items) if (r.region.trim()) counts.set(r.region.trim(), (counts.get(r.region.trim()) ?? 0) + 1);
+  const grouped = new Set(Object.values(REGION_GROUPS).flat());
+  const groups = Object.entries(REGION_GROUPS)
+    .map(([label, regions]) => ({ label, regions, count: regions.reduce((n, x) => n + (counts.get(x) ?? 0), 0) }))
+    .filter((g) => g.count);
+  const single = [...counts]
+    .filter(([region]) => !grouped.has(region))
+    .sort(([a], [b]) => a.localeCompare(b, 'ru'))
+    .map(([region, count]) => ({ label: region, regions: [region], count }));
+  return [...groups, ...single];
+}
+
+/** Отчёты выбранного региона (строки выбора) — первыми, затем остальные; внутри порядок прежний (новые сверху). */
+export function photoReportsRegionFirst(items: PhotoReport[], label: string): PhotoReport[] {
+  const regions = new Set(REGION_GROUPS[label] ?? [label]);
+  if (!label) return items;
+  return [...items.filter((r) => regions.has(r.region.trim())), ...items.filter((r) => !regions.has(r.region.trim()))];
+}

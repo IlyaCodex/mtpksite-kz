@@ -3,9 +3,9 @@ import { setImage } from './images';
 
 /**
  * Фотоотчёты с объектов (блок photoReports, разметка — packages/ui/src/blocks/PhotoReports.tsx):
- * кнопки годов, «Показать ещё» (по pageSize карточек), окно <dialog> с каруселью фото и видео —
- * стрелки, квадратные миниатюры, клавиши ←/→, свайп; кадр вписан в окно целиком. Видео — свой плеер: запуск,
- * перемотка, звук, весь экран.
+ * кнопки годов, выбор региона (его отчёты — первыми, затем остальные), подгрузка по pageSize карточек
+ * при прокрутке до конца списка, окно <dialog> с каруселью фото и видео — стрелки, квадратные миниатюры,
+ * клавиши ←/→, свайп; кадр вписан в окно целиком. Видео — свой плеер: запуск, перемотка, звук, весь экран.
  * Ссылка …#otchet-<id> открывает отчёт сразу. Оформление — styles/photo-reports.css.
  */
 interface Report {
@@ -132,21 +132,28 @@ function initSection(section: HTMLElement): void {
   const dialog: HTMLDialogElement = found;
   const reports = JSON.parse(data.textContent || '[]') as Report[];
   const pageSize = Number(section.dataset.pageSize) || 8;
-  const cards = $$<HTMLElement>('.report-card', section);
-  const more = $<HTMLButtonElement>('[data-reports-more]', section);
-  const moreCount = $('[data-more-count]', section);
+  const grid = $('.photo-reports__grid', section)!;
+  let cards = $$<HTMLElement>('.report-card', section);
+  const sentinel = $('[data-reports-sentinel]', section);
+  const regionBox = $('[data-report-regions]', section);
+  const region = $<HTMLSelectElement>('[data-report-region]', section);
   let year = '';
   let shown = pageSize;
 
-  /** Карточки выбранного года: первые shown видны, кнопка «Показать ещё» — пока есть скрытые. */
-  function apply(focusFrom?: number): void {
+  /** Карточки выбранного года: первые shown видны; пока есть скрытые — метка подгрузки под сеткой. */
+  function apply(): void {
     const match = cards.filter((c) => !year || c.dataset.year === year);
     for (const c of cards) c.hidden = true;
     match.slice(0, shown).forEach((c) => (c.hidden = false));
-    const rest = match.length - shown;
-    if (more) more.parentElement!.hidden = rest <= 0;
-    if (moreCount) moreCount.textContent = String(Math.min(rest, pageSize));
-    if (focusFrom !== undefined) $<HTMLButtonElement>('.report-card__open', match[focusFrom])?.focus();
+    if (sentinel) sentinel.hidden = match.length <= shown;
+  }
+
+  /** Отчёты выбранного региона — первыми, затем остальные; внутри — по дате (data-order — порядок «новые сверху»). */
+  function sortByRegion(): void {
+    const regions = new Set(region?.selectedOptions[0]?.dataset.regions?.split('|') ?? []);
+    const rank = (c: HTMLElement) => (regions.has(c.dataset.region ?? '') ? 0 : 1);
+    cards = [...cards].sort((a, b) => rank(a) - rank(b) || Number(a.dataset.order) - Number(b.dataset.order));
+    grid.append(...cards);
   }
 
   for (const btn of $$<HTMLButtonElement>('.photo-reports__year', section)) {
@@ -160,11 +167,32 @@ function initSection(section: HTMLElement): void {
       apply();
     });
   }
-  // фокус — на первую из новых карточек: с клавиатуры удобно продолжать
-  more?.addEventListener('click', () => {
-    shown += pageSize;
-    apply(shown - pageSize);
+  region?.addEventListener('change', () => {
+    sortByRegion();
+    shown = pageSize;
+    apply();
   });
+  // продолжение раздела: выбор региона — справа от заголовка раздела выше (нет его — в строке годов)
+  if (regionBox?.hidden) {
+    const heading = [...(section.previousElementSibling?.querySelectorAll('h2') ?? [])].pop();
+    (heading?.parentElement ?? $('.photo-reports__head', section))?.append(regionBox);
+    regionBox.hidden = false;
+  }
+  // подгрузка: метка под сеткой подошла к экрану — ещё pageSize карточек
+  if (sentinel && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (sentinel.hidden || !entries.some((e) => e.isIntersecting)) return;
+        shown += pageSize;
+        apply();
+        // экран высокий и метка всё ещё рядом — проверить ещё раз
+        io.unobserve(sentinel);
+        io.observe(sentinel);
+      },
+      { rootMargin: '0px 0px 400px 0px' },
+    );
+    io.observe(sentinel);
+  } else if (sentinel) shown = cards.length;
 
   // ── окно отчёта ──
   const stage = $('[data-stage]', dialog)!;

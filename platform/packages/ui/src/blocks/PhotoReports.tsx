@@ -1,4 +1,12 @@
-import { PHOTO_REPORT_KINDS, photoReportMonth, photoReportPlace, type PhotoReport, type PhotoReportsBlock } from '@mtpk/content-model';
+import {
+  PHOTO_REPORT_KINDS,
+  photoReportMonth,
+  photoReportPlace,
+  photoReportRegions,
+  photoReportsRegionFirst,
+  type PhotoReport,
+  type PhotoReportsBlock,
+} from '@mtpk/content-model';
 import type { RenderContext } from '../context.ts';
 import { extra, Inline } from '../primitives/Html.tsx';
 import { responsiveProps } from '../primitives/images.ts';
@@ -63,19 +71,25 @@ function modalData(items: PhotoReport[]): string {
 
 /**
  * Фотоотчёты с объектов: карточки (фото, на нём месяц и регион, вид работ,
- * заголовок, начало описания), сначала pageSize штук и «Показать ещё», кнопки
- * годов. Щелчок по карточке — окно <dialog> с каруселью фото и видео,
- * описанием, датой и местом. Окно, фильтр и кнопку оживляет клиентский модуль
- * photo-reports; без скрипта видны первые карточки. joined — без своего
- * заголовка: черта и «По годам» с кнопками годов справа.
+ * заголовок, начало описания), сначала pageSize штук, следующие — при прокрутке
+ * до конца списка; кнопки годов и выбор региона: отчёты выбранного региона
+ * (сразу — block.region) первыми, затем остальные. Щелчок по карточке — окно
+ * <dialog> с каруселью фото и видео, описанием, датой и местом. Окно, фильтры и
+ * подгрузку оживляет клиентский модуль photo-reports; без скрипта видны первые
+ * карточки. joined — без своего заголовка: черта и «По годам» с кнопками годов
+ * справа; выбор региона скрипт ставит справа от заголовка раздела выше.
  */
 export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: RenderContext }) {
-  const items = block.items ?? [];
-  if (!items.length) return null;
+  const all = block.items ?? [];
+  if (!all.length) return null;
+  const regions = photoReportRegions(all);
+  // регион без отчётов не выбирается — тогда все по дате
+  const region = regions.some((g) => g.label === block.region) ? block.region : '';
+  const items = photoReportsRegionFirst(all, region);
+  const order = new Map(all.map((r, i) => [r.id, i]));
   const id = block.attrs?.id ?? 'otchety';
   const years = [...new Set(items.map((r) => r.date.slice(0, 4)))].sort().reverse();
   const count = (y: string) => items.filter((r) => r.date.startsWith(y)).length;
-  const rest = items.length - block.pageSize;
   const props = extra(block.attrs, 'section');
   const className = ['photo-reports', block.joined && 'photo-reports--joined', props.className].filter(Boolean).join(' ');
   const yearButtons = years.length > 1 && (
@@ -90,14 +104,31 @@ export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: Re
       ))}
     </div>
   );
+  // в продолжении раздела выбор скрыт, пока скрипт не переставит его к заголовку раздела выше
+  const regionSelect = regions.length > 1 && (
+    <label className="photo-reports__regions" data-report-regions="" hidden={block.joined || undefined}>
+      <span className="photo-reports__regions-label">Регион</span>
+      <span className="photo-reports__select">
+        <select data-report-region="" defaultValue={region}>
+          <option value="">Все регионы</option>
+          {regions.map((g) => (
+            <option key={g.label} value={g.label} data-regions={g.regions.join('|')}>
+              {g.label}
+            </option>
+          ))}
+        </select>
+      </span>
+    </label>
+  );
   return (
     <section id={id} data-photo-reports="" data-page-size={block.pageSize} {...props} className={className}>
       <div className="photo-reports__inner">
         {block.joined ? (
-          yearButtons && (
+          (yearButtons || regionSelect) && (
             <div className="photo-reports__head">
               <Inline as="span" className="photo-reports__label" html={block.yearsLabel} />
               {yearButtons}
+              {regionSelect}
             </div>
           )
         ) : (
@@ -107,7 +138,12 @@ export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: Re
               <Inline as="h2" className="photo-reports__title" html={block.head.title} />
               {block.head.lead && <Inline as="p" className="photo-reports__lead" html={block.head.lead} />}
             </div>
-            {yearButtons}
+            {(regionSelect || yearButtons) && (
+              <div className="photo-reports__filters">
+                {regionSelect}
+                {yearButtons}
+              </div>
+            )}
           </div>
         )}
 
@@ -115,7 +151,14 @@ export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: Re
           {items.map((r, i) => {
             const cover = r.photos[0];
             return (
-              <article key={r.id} className="report-card" data-year={r.date.slice(0, 4)} hidden={i >= block.pageSize || undefined}>
+              <article
+                key={r.id}
+                className="report-card"
+                data-year={r.date.slice(0, 4)}
+                data-region={r.region.trim()}
+                data-order={order.get(r.id)}
+                hidden={i >= block.pageSize || undefined}
+              >
                 <div className="report-card__photo">
                   <img
                     className="report-card__img"
@@ -153,14 +196,8 @@ export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: Re
             );
           })}
         </div>
-
-        {rest > 0 && (
-          <div className="photo-reports__more">
-            <button type="button" className="photo-reports__more-btn" data-reports-more="">
-              <Inline as="span" html={block.more} /> <span data-more-count="">{Math.min(rest, block.pageSize)}</span>
-            </button>
-          </div>
-        )}
+        {/* дошли до него прокруткой — показываются следующие pageSize карточек */}
+        {items.length > block.pageSize && <div className="photo-reports__sentinel" data-reports-sentinel="" aria-hidden="true"></div>}
       </div>
 
       <script type="application/json" className="photo-reports__data" dangerouslySetInnerHTML={{ __html: modalData(items) }} />

@@ -48,7 +48,7 @@ const ENTRIES: Record<string, string> = {
   'holiday-fx': 'src/client/holiday-fx.ts',
   // карта без рекламы (Leaflet, OpenStreetMap): страницы с блоком data-free-map
   'free-map': 'src/client/free-map.ts',
-  // фотоотчёты с объектов: фильтр по годам, «Показать ещё», окно с фото и видео
+  // фотоотчёты с объектов: годы, регион первым, подгрузка при прокрутке, окно с фото и видео
   'photo-reports': 'src/client/photo-reports.ts',
 };
 

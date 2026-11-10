@@ -1,7 +1,7 @@
 /*
  * Фотоотчёты с объектов (блок photoReports, packages/ui/src/blocks/PhotoReports.tsx; поведение —
- * client/photo-reports.ts): карточки с плашкой «месяц · регион» на фото, кнопки годов, «Показать ещё»,
- * окно с каруселью фото и видео (свой плеер). Вид — в тон странице «Проекты» (скругление 20 px,
+ * client/photo-reports.ts): карточки с плашкой «месяц · регион» на фото, кнопки годов, выбор региона,
+ * подгрузка при прокрутке, окно с каруселью фото и видео (свой плеер). Вид — в тон странице «Проекты» (скругление 20 px,
  * зелёный надзаголовок, плашка на фото как у избранных проектов).
  * Цвета поверх фото и видео — переменными: тёмная тема их не перекрашивает (content-kit/dark);
  * остальное — токены сайта, в тёмной теме у них свои значения.
@@ -142,14 +142,36 @@
   -webkit-box-orient: vertical;
 }
 
-.photo-reports__more { display: flex; justify-content: center; margin-top: var(--sp-10); }
-.photo-reports__more[hidden] { display: none; }
-.photo-reports__more-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  height: 48px;
-  padding: 0 26px;
+/* метка под сеткой: дошли до неё прокруткой — скрипт показывает следующие карточки */
+.photo-reports__sentinel { height: 1px; }
+
+/*
+ * Выбор региона: его отчёты — первыми. В продолжении раздела (joined) скрипт ставит его справа
+ * от заголовка раздела выше — поэтому стили не зависят от .photo-reports.
+ */
+.photo-reports__filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--sp-4); }
+.photo-reports__regions { display: inline-flex; flex-shrink: 0; align-items: center; gap: 12px; }
+.photo-reports__regions[hidden] { display: none; }
+.photo-reports__regions-label { font-size: 14px; color: var(--text-secondary); white-space: nowrap; }
+.photo-reports__select { position: relative; display: inline-flex; }
+.photo-reports__select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 19px;
+  width: 7px;
+  height: 7px;
+  margin-top: -6px;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.photo-reports__select select {
+  min-width: 270px;
+  max-width: 100%;
+  height: 44px;
+  padding: 0 46px 0 18px;
   border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--surface-page);
@@ -158,17 +180,11 @@
   font-weight: var(--fw-semibold);
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+  appearance: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
 }
-.photo-reports__more-btn:hover { border-color: var(--teal-600); color: var(--teal-600); }
-.photo-reports__more-btn [data-more-count] {
-  min-width: 26px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--surface-muted);
-  font-size: 13px;
-  color: var(--text-secondary);
-}
+.photo-reports__select select:hover { border-color: var(--teal-600); }
+.photo-reports__select select:focus-visible { outline: 2px solid var(--teal-600); outline-offset: 2px; }
 
 /* ── окно отчёта ─────────────────────────────────────────────────────────── */
 /*
@@ -465,6 +481,9 @@ html:has(.report-modal[open]) { overflow: hidden; }
   .report-card__count { font-size: 11px; padding: 4px 9px; }
   .report-card__badge { top: 8px; left: 8px; max-width: calc(100% - 16px); }
   .report-card__count { right: 8px; bottom: 8px; }
+  /* выбор региона — под заголовком на всю ширину, подпись над полем */
+  .photo-reports__regions { flex-direction: column; align-items: stretch; gap: 6px; width: 100%; }
+  .photo-reports__select select { width: 100%; min-width: 0; }
 }
 @media (max-width: 480px) {
   .photo-reports__grid { grid-template-columns: minmax(0, 1fr); }
