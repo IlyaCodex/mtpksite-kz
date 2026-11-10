@@ -38,6 +38,7 @@ export const WIDGET_GROUPS: { title: string; note?: string; items: Widget[] }[] 
       { type: 'marquee', label: 'Бегущая строка', hint: 'Бесконечная лента слов или логотипов', icon: 'marquee' },
       { type: 'stats', label: 'Показатели', hint: 'Цифры с иконками: годы, проекты, регионы', icon: 'stats' },
       { type: 'faq', label: 'Вопросы и ответы', hint: 'Список вопросов, ответ раскрывается по щелчку', icon: 'faq' },
+      { type: 'calculators', label: 'Калькуляторы расчёта', hint: 'Плавка, расход дроби, смеси ХТС: модель из каталога подставляет свои значения', icon: 'stats' },
     ],
   },
   {

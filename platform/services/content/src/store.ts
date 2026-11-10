@@ -1,9 +1,11 @@
 import {
   buildCompareIndex,
+  hasCalculatorBlocks,
   hasPhotoReportBlocks,
   hasStockBlocks,
   pickStockImage,
   pickStockTitle,
+  resolveCalculatorBlocks,
   resolvePhotoReportBlocks,
   resolveStock,
   resolveStockBlocks,
@@ -14,6 +16,7 @@ import {
   type StockJsonItem,
   type StockView,
 } from '@mtpk/content-kit';
+import { buildCalculatorEquipment, HTS_MIXERS } from '@mtpk/content-kit/calculator-equipment';
 import { hiddenPages, resolveCatalogBlocks, type CatalogData } from '@mtpk/content-kit/catalog';
 import { darkVars } from '@mtpk/content-kit/dark';
 import { LOCALES, splitLocalePath, type Dictionary, type Locale } from '@mtpk/content-kit/i18n';
@@ -27,6 +30,7 @@ import {
   photoReportSettings,
   siteSettings,
   type Block,
+  type CalculatorsBlock,
   type HolidaySettings,
   type PhotoReportSettings,
   type SiteSettings,
@@ -160,14 +164,17 @@ export class ContentStore {
     return css;
   }
 
-  /** Блоки страницы с данными каталога и (если на ней есть такие блоки) склада и фотоотчётов. */
+  /** Блоки страницы с данными каталога и (если на ней есть такие блоки) склада, фотоотчётов и моделей для калькуляторов. */
   async pageData<T extends { id: number; blocks: unknown }>(row: T, catalog?: CatalogData): Promise<T> {
     const data = catalog ?? (await this.catalog());
     const stock = hasStockBlocks(row.blocks as Block[]) ? await this.stockView() : null;
     const resolved = withData(row, data, stock);
-    const out = hasPhotoReportBlocks(resolved.blocks as Block[])
+    const reports = hasPhotoReportBlocks(resolved.blocks as Block[])
       ? { ...resolved, blocks: resolvePhotoReportBlocks(resolved.blocks as Block[], (await this.photoReports()).items) }
       : resolved;
+    const out = hasCalculatorBlocks(reports.blocks as Block[])
+      ? { ...reports, blocks: resolveCalculatorBlocks(reports.blocks as Block[], await this.calculatorEquipment()) }
+      : reports;
     // карточки, разделы и ссылки скрытых тумблером разделов каталога — не на сайте (в базе и в админке — как есть)
     const hidden = hiddenHref(data);
     if (!hidden) return out;
@@ -271,6 +278,22 @@ export class ContentStore {
       const { index, sections, report } = buildCompareIndex(shown.map((r) => ({ path: r.path, body: seoHtml(withCatalog(r, catalog)) })));
       this.log.info({ sections: sections.length, scanned: report.scanned }, 'индекс сравнения пересобран');
       return { index, sections };
+    });
+  }
+
+  /**
+   * Модели для калькуляторов (блок calculators): печи и дробемёты — из индекса сравнения, смесители ХТС — из таблиц
+   * моделей на их страницах. Скрытые тумблером разделы каталога не попадают.
+   */
+  async calculatorEquipment(): Promise<CalculatorsBlock['equipment']> {
+    return this.cache.wrap('calc-equipment', this.ttl * 24, async () => {
+      const { index } = await this.compare();
+      const rows = await this.db.page.findMany({ select: { id: true, path: true, blocks: true }, where: { path: { startsWith: HTS_MIXERS } } });
+      const catalog = await this.catalog();
+      const { ids: hidden } = await this.hidden();
+      const pages = rows.filter((r) => !hidden.has(r.id)).map((r) => ({ path: r.path, html: seoHtml(withCatalog(r, catalog)) }));
+      const { sections } = index as { sections: Parameters<typeof buildCalculatorEquipment>[0]['sections'] };
+      return buildCalculatorEquipment({ sections, pages });
     });
   }
 
@@ -406,7 +429,7 @@ export class ContentStore {
     this.styles = null;
     if (!paths || !paths.length) return this.cache.clear();
     await this.cache.del(...paths.map((p) => `page:${p}`), 'pages:list', 'redirects', 'stock-source', 'stock-view', 'stock-pages', 'site-data', 'catalog', 'hidden-pages');
-    if (paths.some((p) => p.startsWith('/products/'))) await this.cache.del('compare');
+    if (paths.some((p) => p.startsWith('/products/'))) await this.cache.del('compare', 'calc-equipment');
     return paths.length;
   }
 }

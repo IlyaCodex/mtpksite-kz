@@ -16,7 +16,8 @@ export type ClientModule =
   | 'core.css'
   | 'core-end.css'
   | 'free-map'
-  | 'photo-reports';
+  | 'photo-reports'
+  | 'calculators';
 
 const MANIFEST = path.join(process.cwd(), 'public/assets/manifest.json');
 let cached: Record<string, string> | null = null;

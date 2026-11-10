@@ -24,7 +24,9 @@
     "./hero-css": "./src/hero-css.ts",
     "./i18n": "./src/i18n.ts",
     "./locale": "./src/locale.ts",
-    "./ui-strings": "./src/ui-strings.ts"
+    "./ui-strings": "./src/ui-strings.ts",
+    "./calculators": "./src/calculators.ts",
+    "./calculator-equipment": "./src/calculator-equipment.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

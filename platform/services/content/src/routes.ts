@@ -5,9 +5,11 @@ import { CONTENT_STREAM, isAuthorized, publishEvent, type Logger, type Redis, ty
 import {
   classifyStyleBlock,
   detectTemplate,
+  hasCalculatorBlocks,
   hasPhotoReportBlocks,
   hasStockBlocks,
   normalizePath,
+  resolveCalculatorBlocks,
   resolvePhotoReportBlocks,
   resolveStockBlocks,
 } from '@mtpk/content-kit';
@@ -661,7 +663,9 @@ export async function adminRoutes(base: FastifyInstance, deps: Deps) {
       const fromCatalog = page ? resolveCatalogBlocks(page, own, await store.catalog()) : own;
       // блоки склада — с типами и позициями из раздела «Наличие на складе», фотоотчёты — из раздела «Фотоотчёты»
       const withStock = hasStockBlocks(fromCatalog) ? resolveStockBlocks(fromCatalog, await store.stockView()) : fromCatalog;
-      const resolved = hasPhotoReportBlocks(withStock) ? resolvePhotoReportBlocks(withStock, (await store.photoReports()).items) : withStock;
+      const withReports = hasPhotoReportBlocks(withStock) ? resolvePhotoReportBlocks(withStock, (await store.photoReports()).items) : withStock;
+      // калькуляторы — с моделями из каталога
+      const resolved = hasCalculatorBlocks(withReports) ? resolveCalculatorBlocks(withReports, await store.calculatorEquipment()) : withReports;
       const marks = resolved.map((b) => ((b as Record<string, unknown>)[MARK] as string | undefined) ?? null);
       const blocks = req.body.mark ? resolved.map((b) => Object.fromEntries(Object.entries(b).filter(([k]) => k !== MARK)) as Block) : resolved;
       const site = await store.siteData();

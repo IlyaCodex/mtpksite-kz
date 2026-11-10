@@ -86,6 +86,7 @@
 | T13 | Корень услуг `/uslugi/` | 1 | [T13-uslugi-root.md](T13-uslugi-root.md) |
 | T14 | Новость `/news/<slug>/` | 16 | (по образцу /news/) |
 | T15 | Корень новостей `/news/` | 1 | (индекс-сетка cat-card) |
+| T18 | Калькуляторы расчёта `/kalkulyatory/` | 1 | [T18-calculators.md](T18-calculators.md) |
 
 **Итого 553 страницы на 15 типах шаблонов.**
 

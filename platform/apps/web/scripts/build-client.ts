@@ -50,6 +50,8 @@ const ENTRIES: Record<string, string> = {
   'free-map': 'src/client/free-map.ts',
   // фотоотчёты с объектов: годы, регион первым, подгрузка при прокрутке, окно с фото и видео
   'photo-reports': 'src/client/photo-reports.ts',
+  // калькуляторы расчёта: вкладки, выбор модели, пересчёт, сохранение и печать (страница /kalkulyatory/)
+  calculators: 'src/client/calculators.ts',
 };
 
 /**
@@ -77,6 +79,8 @@ const CSS_BUNDLES: Record<string, string[]> = {
     'src/styles/widgets.css',
     // фотоотчёты с объектов: карточки и окно с фото и видео (client/photo-reports.ts)
     'src/styles/photo-reports.css',
+    // калькуляторы расчёта (client/calculators.ts)
+    'src/styles/calculators.css',
     // окно поиска по «лупе» (client/search.ts)
     'src/styles/search.css',
     'src/styles/theme-dark.css',

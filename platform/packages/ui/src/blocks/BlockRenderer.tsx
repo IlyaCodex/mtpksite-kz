@@ -7,6 +7,7 @@ import { enhanceImages } from '../primitives/images-html.ts';
 import { hasFormSlots, HtmlWithForms } from '../forms/FormSlot.tsx';
 import { Adv } from './Adv.tsx';
 import { BestOffer } from './BestOffer.tsx';
+import { Calculators } from './Calculators.tsx';
 import { CatalogCta } from './CatalogCta.tsx';
 import { CatalogCards } from './CatalogCards.tsx';
 import { CatalogList } from './CatalogList.tsx';
@@ -78,6 +79,8 @@ export function BlockView({ block, ctx }: { block: Block; ctx: RenderContext }) 
       return <StockList block={block} ctx={ctx} />;
     case 'photoReports':
       return <PhotoReports block={block} ctx={ctx} />;
+    case 'calculators':
+      return <Calculators block={block} ctx={ctx} />;
     case 'categoryHero':
       return <CategoryHero block={block} />;
     case 'homeHero':

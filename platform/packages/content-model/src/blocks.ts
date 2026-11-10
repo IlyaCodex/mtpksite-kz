@@ -491,6 +491,57 @@ export const photoReportsBlock = z
   })
   .describe('Фотоотчёты с объектов (раздел «Фотоотчёты»)');
 
+/** Модель для калькулятора: значения полей, которые подставляет её выбор (подбирает контент-сервис из характеристик). */
+const calcEquipment = z.object({
+  name: z.string(),
+  url: z.string(),
+  group: z.string(),
+  values: z.record(z.string(), z.number()),
+  specific: z.record(z.string(), z.number()).optional(),
+  alloy: z.string().optional(),
+  selects: z.record(z.string(), z.string()).optional(),
+  facts: z.array(z.string()).default([]),
+});
+const calcExample = (label: string) => z.number().min(0).optional().describe(label);
+
+/**
+ * Калькуляторы расчёта (страница /kalkulyatory/): вкладки «Плавка», «Расход дроби», «Смеси ХТС» — исходные данные
+ * и «Ваш расчёт». Выбор модели из каталога подставляет её паспортные значения; поля и формулы —
+ * content-kit/calculators.ts. Валюта и цены примера — свои у сайта (на .kz — тенге).
+ */
+export const calculatorsBlock = z
+  .object({
+    type: z.literal('calculators'),
+    head: sectionHead.default({
+      eyebrow: 'Инструменты технолога',
+      title: 'Калькуляторы расчёта',
+      lead: 'Плавка, расход дроби и смеси ХТС: выберите модель из каталога или введите параметры своего оборудования.',
+    }),
+    tabs: z
+      .array(z.enum(['melt', 'shot', 'hts']).meta({ enumLabels: { melt: 'Плавка', shot: 'Расход дроби', hts: 'Смеси ХТС' } }))
+      .default(['melt', 'shot', 'hts'])
+      .describe('Калькуляторы и порядок вкладок'),
+    currency: z.string().default('₽').describe('Валюта тарифа и цен'),
+    examples: z
+      .object({
+        tariff: calcExample('Тариф электроэнергии, за кВт·ч'),
+        shotPrice: calcExample('Цена дроби, за кг'),
+        sandPrice: calcExample('Свежий песок, за т'),
+        binderPrice: calcExample('Связующее, за кг'),
+        hardenerPrice: calcExample('Отвердитель, за кг'),
+        reclaimPrice: calcExample('Подготовка регенерата, за т'),
+      })
+      .default({})
+      .describe('Пример: свой тариф и цены (пусто — как в калькуляторе)'),
+    attrs: attrs(),
+    /** заполняет контент-сервис при выводе страницы */
+    equipment: z
+      .object({ melt: z.array(calcEquipment), shot: z.array(calcEquipment), hts: z.array(calcEquipment) })
+      .optional()
+      .meta({ hidden: true }),
+  })
+  .describe('Калькуляторы расчёта: плавка, расход дроби, смеси ХТС');
+
 export const categoryHeroBlock = z
   .object({
     type: z.literal('categoryHero'),
@@ -775,6 +826,7 @@ export const block: z.ZodType<Block> = z.lazy(() =>
     stockShowcaseBlock,
     stockListBlock,
     photoReportsBlock,
+    calculatorsBlock,
     categoryHeroBlock,
     homeHeroBlock,
     faqBlock,
@@ -808,6 +860,7 @@ export type CatalogCardsBlock = z.infer<typeof catalogCardsBlock>;
 export type StockShowcaseBlock = z.infer<typeof stockShowcaseBlock>;
 export type StockListBlock = z.infer<typeof stockListBlock>;
 export type PhotoReportsBlock = z.infer<typeof photoReportsBlock>;
+export type CalculatorsBlock = z.infer<typeof calculatorsBlock>;
 export type CategoryHeroBlock = z.infer<typeof categoryHeroBlock>;
 export type HomeHeroBlock = z.infer<typeof homeHeroBlock>;
 export type FaqBlock = z.infer<typeof faqBlock>;
@@ -841,6 +894,7 @@ export type Block =
   | StockShowcaseBlock
   | StockListBlock
   | PhotoReportsBlock
+  | CalculatorsBlock
   | CategoryHeroBlock
   | HomeHeroBlock
   | FaqBlock
@@ -877,6 +931,7 @@ export const BLOCK_SCHEMAS: Record<BlockType, z.ZodType> = {
   stockShowcase: stockShowcaseBlock,
   stockList: stockListBlock,
   photoReports: photoReportsBlock,
+  calculators: calculatorsBlock,
   categoryHero: categoryHeroBlock,
   homeHero: homeHeroBlock,
   faq: faqBlock,
@@ -912,6 +967,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   stockShowcase: 'Склад: типы оборудования',
   stockList: 'Склад: позиции в наличии',
   photoReports: 'Фотоотчёты с объектов',
+  calculators: 'Калькуляторы расчёта',
   categoryHero: 'Обложка раздела',
   homeHero: 'Обложка главной',
   faq: 'Частые вопросы',

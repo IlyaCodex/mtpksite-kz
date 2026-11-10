@@ -157,6 +157,11 @@
 - Праздничные баннеры главной (расписание, баннеры, поздравления, эффекты) — админка «Праздники»; модель и даты —
   `packages/content-model/src/holidays.ts`, шапка — `packages/ui/src/blocks/HomeHero.tsx`, эффекты —
   `apps/web/src/client/holiday-fx.ts`, стили — `apps/web/src/styles/holiday.css`.
+- Калькуляторы расчёта (`/kalkulyatory/`, вкладки `#plavka`, `#drob`, `#hts`) — блок `calculators`, код как на основном: поля и
+  формулы — `content-kit/calculators.ts`, модели из каталога — `content-kit/calculator-equipment.ts` (подставляет контент-сервис),
+  вид — `packages/ui/src/blocks/Calculators.tsx`, `styles/calculators.css`, поведение — `client/calculators.ts`: подписи берёт
+  из разметки (её переводит словарь), числа пишет в записи языка страницы. Валюта и цены примера — поля блока (здесь — тенге).
+  Тип страницы — T18.
 
 ## Где живёт состояние проекта
 
