@@ -2,7 +2,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /** Клиентские модули (см. scripts/build-client.ts). */
-export type ClientModule = 'site' | 'gallery' | 'lightbox' | 'spec-nav' | 'catalog-filter' | 'carousel' | 'stock' | 'spare' | 'doc-bar' | 'holiday-fx' | 'core.css' | 'core-end.css' | 'free-map';
+export type ClientModule =
+  | 'site'
+  | 'gallery'
+  | 'lightbox'
+  | 'spec-nav'
+  | 'catalog-filter'
+  | 'carousel'
+  | 'stock'
+  | 'spare'
+  | 'doc-bar'
+  | 'holiday-fx'
+  | 'core.css'
+  | 'core-end.css'
+  | 'free-map'
+  | 'photo-reports';
 
 const MANIFEST = path.join(process.cwd(), 'public/assets/manifest.json');
 let cached: Record<string, string> | null = null;

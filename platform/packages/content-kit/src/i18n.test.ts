@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { localizeHref, localizeHtml, localizeJsonLd, normalizeText, splitLocalePath, translateText } from './i18n.ts';
+import { htmlTexts, localizeHref, localizeHtml, localizeJsonLd, normalizeText, splitLocalePath, translateText } from './i18n.ts';
 
 const dict = new Map([
   ['Индукционные печи', 'Индукциялық пештер'],
@@ -40,6 +40,22 @@ test('страница: текст, подписи и ссылки — на яз
     localizeHtml(html, 'kz', dict),
     '<a href="/kz/products/x/" title="Жабдықтар каталогы"><img src="/img/a.png" alt="Пеш суреті"> Индукциялық пештер </a><script>var s = "Индукционные печи";</script>',
   );
+});
+
+test('данные скриптов: переводятся поля из списка (текст — по абзацам), остальное и чужие данные как есть', () => {
+  const data = (json: unknown, attrs: string) => `<script type="application/json" ${attrs}>${JSON.stringify(json)}</script>`;
+  const report = [{ id: 'a', title: 'Индукционные печи', text: 'Фото печи\n\nКаталог оборудования', photos: [{ src: '/img/a.png', alt: 'Фото печи' }] }];
+  assert.equal(
+    localizeHtml(data(report, 'class="photo-reports__data"'), 'kz', dict),
+    data([{ id: 'a', title: 'Индукциялық пештер', text: 'Пеш суреті\n\nЖабдықтар каталогы', photos: [{ src: '/img/a.png', alt: 'Пеш суреті' }] }], 'class="photo-reports__data"'),
+  );
+  const registry = [{ id: 'Индукционные печи', title: 'Фото печи', categories: ['Индукционные печи'], years: { 2024: { equipment: [{ name: 'Индукционные печи', qty: 1 }], works: [] } } }];
+  assert.equal(
+    localizeHtml(data(registry, 'id="pr-data"'), 'en', new Map([['Индукционные печи', 'Furnaces'], ['Фото печи', 'Photo']])),
+    data([{ id: 'Индукционные печи', title: 'Photo', categories: ['Furnaces'], years: { 2024: { equipment: [{ name: 'Furnaces', qty: 1 }], works: [] } } }], 'id="pr-data"'),
+  );
+  assert.equal(localizeHtml(data({ title: 'Фото печи' }, 'id="other"'), 'kz', dict), data({ title: 'Фото печи' }, 'id="other"'));
+  assert.deepEqual(htmlTexts(data(report, 'class="photo-reports__data"')), ['Индукционные печи', 'Фото печи', 'Каталог оборудования', 'Фото печи']);
 });
 
 test('русская версия: только приставка в адресах', () => {

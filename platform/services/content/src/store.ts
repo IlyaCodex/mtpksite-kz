@@ -1,8 +1,10 @@
 import {
   buildCompareIndex,
+  hasPhotoReportBlocks,
   hasStockBlocks,
   pickStockImage,
   pickStockTitle,
+  resolvePhotoReportBlocks,
   resolveStock,
   resolveStockBlocks,
   resolveStockView,
@@ -17,7 +19,18 @@ import { darkVars } from '@mtpk/content-kit/dark';
 import { LOCALES, splitLocalePath, type Dictionary, type Locale } from '@mtpk/content-kit/i18n';
 import { hiddenTest, pruneHiddenHtml, pruneHiddenLinks, type HiddenTest } from '@mtpk/content-kit/hidden-links';
 import { styleFileCss } from '@mtpk/content-kit/styles';
-import { DEFAULT_HOLIDAYS, DEFAULT_SETTINGS, holidaySettings, siteSettings, type Block, type HolidaySettings, type SiteSettings } from '@mtpk/content-model';
+import {
+  DEFAULT_HOLIDAYS,
+  DEFAULT_PHOTO_REPORTS,
+  DEFAULT_SETTINGS,
+  holidaySettings,
+  photoReportSettings,
+  siteSettings,
+  type Block,
+  type HolidaySettings,
+  type PhotoReportSettings,
+  type SiteSettings,
+} from '@mtpk/content-model';
 import { hiddenSitePages, loadCatalog } from './catalog-data.ts';
 import type { Db, Page, StyleBlock } from './db.ts';
 import type { JsonCache, Logger, PageDto, PageListItem, RedirectDto } from '@mtpk/shared';
@@ -147,11 +160,14 @@ export class ContentStore {
     return css;
   }
 
-  /** Блоки страницы с данными каталога и (если на ней есть блоки склада) склада. */
+  /** Блоки страницы с данными каталога и (если на ней есть такие блоки) склада и фотоотчётов. */
   async pageData<T extends { id: number; blocks: unknown }>(row: T, catalog?: CatalogData): Promise<T> {
     const data = catalog ?? (await this.catalog());
     const stock = hasStockBlocks(row.blocks as Block[]) ? await this.stockView() : null;
-    const out = withData(row, data, stock);
+    const resolved = withData(row, data, stock);
+    const out = hasPhotoReportBlocks(resolved.blocks as Block[])
+      ? { ...resolved, blocks: resolvePhotoReportBlocks(resolved.blocks as Block[], (await this.photoReports()).items) }
+      : resolved;
     // карточки, разделы и ссылки скрытых тумблером разделов каталога — не на сайте (в базе и в админке — как есть)
     const hidden = hiddenHref(data);
     if (!hidden) return out;
@@ -310,6 +326,28 @@ export class ContentStore {
 
   async purgeHolidays(): Promise<void> {
     await this.cache.del('holidays');
+  }
+
+  /** Фотоотчёты с объектов (раздел «Фотоотчёты»). Нет записи или она битая — пусто. */
+  async photoReports(): Promise<PhotoReportSettings> {
+    return this.cache.wrap('photo-reports', this.ttl, async () => {
+      const row = await this.db.setting.findUnique({ where: { key: 'photo-reports' } });
+      if (!row) return DEFAULT_PHOTO_REPORTS;
+      const parsed = photoReportSettings.safeParse(row.value);
+      if (parsed.success) return parsed.data;
+      this.log.error({ issues: parsed.error.issues.slice(0, 5) }, 'фотоотчёты не прошли проверку — на сайте их не будет');
+      return DEFAULT_PHOTO_REPORTS;
+    });
+  }
+
+  /** Страницы с блоком фотоотчётов — их кеш сбрасывается при сохранении отчётов. */
+  async photoReportPages(): Promise<string[]> {
+    const rows = await this.db.$queryRaw<{ path: string }[]>`SELECT path FROM content.pages WHERE blocks::text LIKE '%"photoReports"%'`;
+    return rows.map((r) => r.path);
+  }
+
+  async purgePhotoReports(): Promise<void> {
+    await this.cache.del('photo-reports');
   }
 
   /** Словарь языка для поиска и данных сравнения (у сайта свой — lib/content.ts). */

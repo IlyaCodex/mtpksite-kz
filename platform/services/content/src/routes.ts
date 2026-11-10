@@ -2,7 +2,15 @@ import crypto from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CONTENT_STREAM, isAuthorized, publishEvent, type Logger, type Redis, type ZodTypeProvider } from '@mtpk/shared';
-import { classifyStyleBlock, detectTemplate, hasStockBlocks, normalizePath, resolveStockBlocks } from '@mtpk/content-kit';
+import {
+  classifyStyleBlock,
+  detectTemplate,
+  hasPhotoReportBlocks,
+  hasStockBlocks,
+  normalizePath,
+  resolvePhotoReportBlocks,
+  resolveStockBlocks,
+} from '@mtpk/content-kit';
 import { sectionParts } from '@mtpk/content-kit/section';
 import { cssFileRecord } from '@mtpk/content-kit/styles';
 import { formatHtml } from '@mtpk/content-kit/format-html';
@@ -22,6 +30,7 @@ import {
   nearestWindow,
   pageHasLeadgen,
   pageInput,
+  photoReportSettings,
   siteSettings,
   toActiveHoliday,
   walkBlocks,
@@ -650,8 +659,9 @@ export async function adminRoutes(base: FastifyInstance, deps: Deps) {
       });
       const page = await db.page.findUnique({ where: { path: normalizePath(req.body.path) }, select: { id: true } });
       const fromCatalog = page ? resolveCatalogBlocks(page, own, await store.catalog()) : own;
-      // блоки склада — с типами и позициями из раздела «Наличие на складе»
-      const resolved = hasStockBlocks(fromCatalog) ? resolveStockBlocks(fromCatalog, await store.stockView()) : fromCatalog;
+      // блоки склада — с типами и позициями из раздела «Наличие на складе», фотоотчёты — из раздела «Фотоотчёты»
+      const withStock = hasStockBlocks(fromCatalog) ? resolveStockBlocks(fromCatalog, await store.stockView()) : fromCatalog;
+      const resolved = hasPhotoReportBlocks(withStock) ? resolvePhotoReportBlocks(withStock, (await store.photoReports()).items) : withStock;
       const marks = resolved.map((b) => ((b as Record<string, unknown>)[MARK] as string | undefined) ?? null);
       const blocks = req.body.mark ? resolved.map((b) => Object.fromEntries(Object.entries(b).filter(([k]) => k !== MARK)) as Block) : resolved;
       const site = await store.siteData();
@@ -711,6 +721,32 @@ export async function adminRoutes(base: FastifyInstance, deps: Deps) {
       // праздничная шапка — только на главной
       await notifyWeb(['/']);
       return { ok: true };
+    },
+  );
+
+  // ── Фотоотчёты с объектов ──────────────────────────────────────────────
+  app.get(
+    '/admin/v1/photo-reports',
+    { schema: { tags: ['Админка: настройки'], summary: 'Фотоотчёты: отгрузки, запуски, сервис', security: ADMIN } },
+    async () => store.photoReports(),
+  );
+  app.put(
+    '/admin/v1/photo-reports',
+    { schema: { tags: ['Админка: настройки'], summary: 'Сохранить фотоотчёты', body: photoReportSettings, security: ADMIN } },
+    async (req, reply) => {
+      const ids = req.body.items.map((r) => r.id);
+      if (new Set(ids).size !== ids.length) return reply.code(400).send({ error: 'duplicate_id' });
+      const by = typeof req.headers['x-admin-user'] === 'string' ? req.headers['x-admin-user'] : null;
+      const value = req.body as Prisma.InputJsonValue;
+      await db.setting.upsert({ where: { key: 'photo-reports' }, create: { key: 'photo-reports', value, updatedBy: by }, update: { value, updatedBy: by } });
+      await store.purgePhotoReports();
+      // отчёты видны только на страницах с их блоком
+      const pages = await store.photoReportPages();
+      if (pages.length) {
+        await store.purge(pages);
+        await notifyWeb(pages);
+      }
+      return { ok: true, items: req.body.items.length };
     },
   );
 

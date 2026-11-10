@@ -60,6 +60,8 @@ export function describeAction({ action, target, details }: Entry): string {
       return `${done} редирект${d.from ? ` ${String(d.from)} → ${String(d.to ?? '')}` : ''}`;
     case action.startsWith('content.') && t === '/stock':
       return 'Обновлено наличие на складе';
+    case action.startsWith('content.') && t === '/photo-reports':
+      return 'Обновлены фотоотчёты';
     case action.startsWith('content.') && t.startsWith('/cache'):
       return 'Обновлён кеш сайта';
     case action.startsWith('media.') && t.startsWith('/objects'):

@@ -22,18 +22,62 @@ const LINK_ATTRS: Record<string, Set<string>> = {
 /** Внутрь не заходим: код и служебная разметка. */
 const SKIP = new Set(['script', 'style', 'noscript', 'svg']);
 
+/**
+ * Данные скриптов страницы (<script type="application/json">) с текстом для посетителя: окно фотоотчётов, реестр
+ * проектов. Переводятся строки только этих полей — то, что видно на странице, и подписи, с которыми скрипт сравнивает
+ * фильтры (их варианты в разметке переведены тем же словарём); номера, адреса, годы — как есть.
+ */
+const DATA_FIELDS: Record<string, Set<string>> = {
+  '.photo-reports__data': new Set(['kind', 'date', 'place', 'title', 'text', 'alt']),
+  '#pr-data': new Set(['title', 'region', 'categories', 'works', 'name']),
+};
+
 const isElement = (n: Node): n is Element => 'tagName' in n;
 const isText = (n: Node): n is TextNode => n.nodeName === '#text';
 const childrenOf = (n: Element): Node[] =>
   n.tagName === 'template' ? ((n as unknown as { content: { childNodes: Node[] } }).content.childNodes ?? []) : (n.childNodes as Node[]);
+const attr = (el: Element, name: string) => el.attrs.find((a) => a.name === name)?.value;
 
-/** visitElement вернул false — внутрь элемента не заходим: он уже переведён целиком. */
-function walk(nodes: Node[], visitText: (n: TextNode) => void, visitElement: (el: Element) => boolean | void): void {
+/** Переводимые поля данных в <script>, если это такие данные. */
+function dataFields(el: Element): Set<string> | undefined {
+  if (el.tagName !== 'script' || attr(el, 'type') !== 'application/json') return undefined;
+  const id = attr(el, 'id');
+  return (id && DATA_FIELDS[`#${id}`]) || (attr(el, 'class') ?? '').split(/\s+/).map((c) => DATA_FIELDS[`.${c}`]).find(Boolean);
+}
+
+/** Данные с переведёнными полями. Длинный текст — по абзацам: в ключах словаря переносов строк нет. */
+function mapData(value: unknown, fields: Set<string>, visit: (text: string) => string, key = ''): unknown {
+  if (typeof value === 'string') return fields.has(key) ? value.split(/(\n\s*\n)/).map((part, i) => (i % 2 ? part : visit(part))).join('') : value;
+  if (Array.isArray(value)) return value.map((v) => mapData(v, fields, visit, key));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, mapData(v, fields, visit, k)]));
+  return value;
+}
+
+/** visitElement вернул false — внутрь элемента не заходим: он уже переведён целиком. visitData — данные скриптов (DATA_FIELDS). */
+function walk(
+  nodes: Node[],
+  visitText: (n: TextNode) => void,
+  visitElement: (el: Element) => boolean | void,
+  visitData?: (n: TextNode, fields: Set<string>) => void,
+): void {
   for (const n of nodes) {
     if (isText(n)) visitText(n);
     else if (isElement(n) && !SKIP.has(n.tagName) && !n.attrs.some((a) => a.name === 'translate' && a.value === 'no')) {
-      if (visitElement(n) !== false) walk(childrenOf(n), visitText, visitElement);
+      if (visitElement(n) !== false) walk(childrenOf(n), visitText, visitElement, visitData);
+    } else if (visitData && isElement(n)) {
+      const fields = dataFields(n);
+      const text = fields && (n.childNodes as Node[]).find(isText);
+      if (text) visitData(text, fields);
     }
+  }
+}
+
+/** JSON из <script>; испорченный — null (такие данные не трогаем). */
+function parseData(text: TextNode): unknown {
+  try {
+    return JSON.parse(text.value);
+  } catch {
+    return null;
   }
 }
 
@@ -107,12 +151,24 @@ export function localizeHtml(html: string, locale: Locale, dict: Dictionary): st
       for (const c of el.childNodes) c.parentNode = el;
       return false;
     },
+    (text, fields) => {
+      const data = parseData(text);
+      if (data === null) return;
+      let changed = false;
+      const next = mapData(data, fields, (s) => {
+        const t = translateText(s, dict);
+        if (t !== s) changed = true;
+        return t;
+      });
+      // «<» — кодом: «</script» в тексте не закроет тег
+      if (changed) text.value = JSON.stringify(next).replace(/</g, '\\u003c');
+    },
   );
   return serialize(frag);
 }
 
 export interface PageText {
-  /** text — текст, атрибут — его имя */
+  /** text — текст, data — строка данных скрипта (DATA_FIELDS), атрибут — его имя */
   kind: string;
   /** родительский тег: сопоставление строк страницы на двух языках */
   parent: string;
@@ -137,6 +193,15 @@ export function pageTexts(nodes: Node[]): PageText[] {
         const text = normalizeText(a.value);
         if (hasLetters(text)) out.push({ kind: a.name, parent: el.tagName, text });
       }
+    },
+    (node, fields) => {
+      const data = parseData(node);
+      if (data === null) return;
+      mapData(data, fields, (s) => {
+        const text = normalizeText(s);
+        if (hasLetters(text)) out.push({ kind: 'data', parent: 'script', text });
+        return s;
+      });
     },
   );
   return out;

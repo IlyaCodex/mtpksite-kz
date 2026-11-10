@@ -57,6 +57,10 @@ export const PLACES: Record<string, Place> = {
   // проекты: плитки с фото на всю карточку (есть широкие — на две колонки), фон шапки, миниатюры на странице проекта
   'pr-photo': { widths: WIDTHS.card, sizes: '(max-width: 760px) 100vw, (max-width: 1100px) 50vw, (max-width: 1440px) 46vw, 660px' },
   'pr-hero__bg': { widths: WIDTHS.wide, sizes: '100vw' },
+  // фотоотчёты: карточки (4 в ряд, 3 до 1100px, 2 до 760px, одна до 480px), кадр в окне и миниатюры под ним
+  'report-card__img': { widths: WIDTHS.card, sizes: '(max-width: 480px) 92vw, (max-width: 760px) 46vw, (max-width: 1100px) 31vw, (max-width: 1440px) 23vw, 340px' },
+  'report-modal__img': { widths: WIDTHS.wide, sizes: '(max-width: 900px) 100vw, 760px' },
+  'report-modal__thumb': { widths: WIDTHS.thumb, sizes: '80px' },
   // праздничный баннер обложки главной (раздел «Праздники»)
   'hero__holiday-img': { widths: WIDTHS.wide, sizes: '100vw' },
   'ui-thumb': { widths: WIDTHS.thumb, sizes: '84px' },

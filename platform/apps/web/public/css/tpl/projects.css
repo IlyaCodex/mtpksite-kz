@@ -53,6 +53,9 @@
 .pr-stats > div + div { padding-left: var(--sp-6); border-left: 1px solid rgba(255, 255, 255, 0.16); }
 .pr-stats dt { font-family: var(--font-display); font-size: clamp(30px, 3.2vw, 44px); font-weight: var(--fw-bold); line-height: 1; letter-spacing: -0.02em; color: #fff; }
 .pr-stats dd { margin: var(--sp-2) 0 0; font-size: 14px; line-height: 1.45; color: rgba(255, 255, 255, 0.66); }
+/* «Российский производитель»: флаг высотой с цифры соседних ячеек, подпись в две строки */
+.pr-stats .pr-flag { display: block; width: 1.08em; height: 0.72em; margin: 0.08em 0 0.2em; overflow: hidden; border-radius: 0.1em; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.32), 0 14px 26px -14px rgba(0, 0, 0, 0.85); }
+.pr-stats dd strong { display: block; margin-bottom: 2px; font-weight: var(--fw-semibold); color: #fff; }
 
 /* --- заголовки разделов --- */
 .pr-section-title { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-6); margin: 0 0 var(--sp-8); }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { attrs, code, crumb, element, href, image, inline, rich, svgIcon, text } from './fields.ts';
+import { photoReport } from './photo-reports.ts';
 
 /**
  * Блоки страниц. Страница сайта — упорядоченный список блоков; каждый блок
@@ -459,6 +460,32 @@ export const stockListBlock = z
   })
   .describe('Склад: позиции в наличии (фильтр и карточки)');
 
+/**
+ * Фотоотчёты с объектов: карточки отгрузок и запусков (фото, на нём дата и
+ * регион), сначала pageSize штук и «Показать ещё», фильтр по годам; щелчок —
+ * окно с фото и видео, описанием, датой и местом. Отчёты — из раздела админки
+ * «Фотоотчёты» (подставляет контент-сервис); пусто — секции нет.
+ * joined — продолжение раздела выше (на /proekty/ — «Реализованные проекты»):
+ * вместо заголовка тонкая черта и строка «По годам» с кнопками годов справа.
+ */
+export const photoReportsBlock = z
+  .object({
+    type: z.literal('photoReports'),
+    head: sectionHead.default({
+      eyebrow: 'Отгрузки, запуски, сервис',
+      title: 'Фотоотчёты с&nbsp;объектов',
+      lead: 'Отгрузки со&nbsp;склада, пусконаладка у&nbsp;заказчиков и&nbsp;сервисные выезды. Нажмите на&nbsp;карточку, чтобы посмотреть все фото и&nbsp;видео.',
+    }),
+    joined: z.boolean().default(false).describe('Продолжение раздела выше: без своего заголовка, сверху — тонкая черта'),
+    yearsLabel: inline('Подпись у кнопок годов (в продолжении раздела)').default('По&nbsp;годам'),
+    pageSize: z.number().int().min(4).max(24).default(8).describe('Карточек сразу и по кнопке «Показать ещё»'),
+    more: inline('Кнопка «Показать ещё»').default('Показать ещё'),
+    attrs: attrs(),
+    /** заполняет контент-сервис при выводе страницы */
+    items: z.array(photoReport).optional().meta({ hidden: true }),
+  })
+  .describe('Фотоотчёты с объектов (раздел «Фотоотчёты»)');
+
 export const categoryHeroBlock = z
   .object({
     type: z.literal('categoryHero'),
@@ -742,6 +769,7 @@ export const block: z.ZodType<Block> = z.lazy(() =>
     catalogCardsBlock,
     stockShowcaseBlock,
     stockListBlock,
+    photoReportsBlock,
     categoryHeroBlock,
     homeHeroBlock,
     faqBlock,
@@ -774,6 +802,7 @@ export type CatalogListBlock = z.infer<typeof catalogListBlock>;
 export type CatalogCardsBlock = z.infer<typeof catalogCardsBlock>;
 export type StockShowcaseBlock = z.infer<typeof stockShowcaseBlock>;
 export type StockListBlock = z.infer<typeof stockListBlock>;
+export type PhotoReportsBlock = z.infer<typeof photoReportsBlock>;
 export type CategoryHeroBlock = z.infer<typeof categoryHeroBlock>;
 export type HomeHeroBlock = z.infer<typeof homeHeroBlock>;
 export type FaqBlock = z.infer<typeof faqBlock>;
@@ -806,6 +835,7 @@ export type Block =
   | CatalogCardsBlock
   | StockShowcaseBlock
   | StockListBlock
+  | PhotoReportsBlock
   | CategoryHeroBlock
   | HomeHeroBlock
   | FaqBlock
@@ -841,6 +871,7 @@ export const BLOCK_SCHEMAS: Record<BlockType, z.ZodType> = {
   catalogCards: catalogCardsBlock,
   stockShowcase: stockShowcaseBlock,
   stockList: stockListBlock,
+  photoReports: photoReportsBlock,
   categoryHero: categoryHeroBlock,
   homeHero: homeHeroBlock,
   faq: faqBlock,
@@ -875,6 +906,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   catalogCards: 'Карточки каталога',
   stockShowcase: 'Склад: типы оборудования',
   stockList: 'Склад: позиции в наличии',
+  photoReports: 'Фотоотчёты с объектов',
   categoryHero: 'Обложка раздела',
   homeHero: 'Обложка главной',
   faq: 'Частые вопросы',

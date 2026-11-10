@@ -2,10 +2,11 @@ type PrYear={works:string[];equipment:{name:string}[]};
 type PrRecord={id:string;title:string;region:string;categories:string[];years:Record<string,PrYear>};
 
 (()=>{
-const root=document.querySelector('.pr-root');if(!root)return;
-// Реестр есть только на странице всех проектов; на главном
-// экране раздела те же классы, но данных и фильтров нет.
-if(!document.getElementById('pr-data')||!root.querySelector('.pr-filters'))return;
+// Реестр есть только на странице всех проектов; на главном экране раздела те же классы,
+// но данных и фильтров нет. Обёрток .pr-root на странице несколько (между избранными
+// проектами и реестром — блок фотоотчётов): берём ту, где фильтры.
+const root=document.querySelector('.pr-filters')?.closest('.pr-root');if(!root)return;
+if(!document.getElementById('pr-data'))return;
 const list=[...root.querySelectorAll<HTMLElement>('.pr-record')],data: PrRecord[]=JSON.parse(document.getElementById('pr-data')!.textContent!),byId=new Map(data.map(p=>[p.id,p]));
 const input=(id: string)=>root.querySelector('#'+id) as HTMLInputElement;let page=1;const size=6;
 function matches(p: PrRecord,q: string,category: string,year: string,region: string,work: string){

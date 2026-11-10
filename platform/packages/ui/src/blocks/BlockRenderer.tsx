@@ -15,6 +15,7 @@ import { HomeHero } from './HomeHero.tsx';
 import { Leadgen } from './Leadgen.tsx';
 import { Lightbox } from './Lightbox.tsx';
 import { Partner } from './Partner.tsx';
+import { PhotoReports } from './PhotoReports.tsx';
 import { ProductHero } from './ProductHero.tsx';
 import { ProductSpec } from './ProductSpec.tsx';
 import { Container, Faq, ScriptLink, Stats, StyleLink } from './Simple.tsx';
@@ -75,6 +76,8 @@ export function BlockView({ block, ctx }: { block: Block; ctx: RenderContext }) 
       return <StockShowcase block={block} ctx={ctx} />;
     case 'stockList':
       return <StockList block={block} ctx={ctx} />;
+    case 'photoReports':
+      return <PhotoReports block={block} ctx={ctx} />;
     case 'categoryHero':
       return <CategoryHero block={block} />;
     case 'homeHero':

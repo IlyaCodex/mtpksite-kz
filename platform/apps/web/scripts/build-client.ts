@@ -48,6 +48,8 @@ const ENTRIES: Record<string, string> = {
   'holiday-fx': 'src/client/holiday-fx.ts',
   // карта без рекламы (Leaflet, OpenStreetMap): страницы с блоком data-free-map
   'free-map': 'src/client/free-map.ts',
+  // фотоотчёты с объектов: фильтр по годам, «Показать ещё», окно с фото и видео
+  'photo-reports': 'src/client/photo-reports.ts',
 };
 
 /**
@@ -73,6 +75,8 @@ const CSS_BUNDLES: Record<string, string[]> = {
     // праздничная обложка главной (раздел «Праздники»)
     'src/styles/holiday.css',
     'src/styles/widgets.css',
+    // фотоотчёты с объектов: карточки и окно с фото и видео (client/photo-reports.ts)
+    'src/styles/photo-reports.css',
     // окно поиска по «лупе» (client/search.ts)
     'src/styles/search.css',
     'src/styles/theme-dark.css',

@@ -29,6 +29,7 @@ export const WIDGET_GROUPS: { title: string; note?: string; items: Widget[] }[] 
       { type: 'gallery', label: 'Сетка фото', hint: 'Фото плиткой в 2–6 колонок, открываются на весь экран', icon: 'gallery' },
       { type: 'carousel', label: 'Карусель', hint: 'Слайды листаются стрелками и свайпом, есть автопрокрутка', icon: 'carousel' },
       { type: 'video', label: 'Видео', hint: 'YouTube, RuTube, VK Видео или свой файл .mp4', icon: 'video' },
+      { type: 'photoReports', label: 'Фотоотчёты с объектов', hint: 'Отгрузки и запуски из раздела «Фотоотчёты»: карточки, годы, окно с фото и видео', icon: 'camera' },
     ],
   },
   {

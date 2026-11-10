@@ -47,6 +47,7 @@ export function pageModules(blocks: Block[], holiday: ActiveHoliday | null = nul
     if (b.type === 'carousel' && b.slides.length > 1) need.add('carousel');
     if (b.type === 'gallery' && b.zoom && b.photos.length) need.add('lightbox');
     if (b.type === 'stockShowcase') need.add('stock');
+    if (b.type === 'photoReports' && b.items?.length) need.add('photo-reports');
     if (b.type === 'stockList') {
       need.add('stock');
       need.add('lightbox');
