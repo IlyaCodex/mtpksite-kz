@@ -1,5 +1,6 @@
 import {
   PHOTO_REPORT_KINDS,
+  PHOTO_REPORTS_REGION,
   photoReportMonth,
   photoReportPlace,
   photoReportRegions,
@@ -83,8 +84,9 @@ export function PhotoReports({ block, ctx }: { block: PhotoReportsBlock; ctx: Re
   const all = block.items ?? [];
   if (!all.length) return null;
   const regions = photoReportRegions(all);
-  // регион без отчётов не выбирается — тогда все по дате
-  const region = regions.some((g) => g.label === block.region) ? block.region : '';
+  // поля нет у блоков, сохранённых раньше; регион без отчётов не выбирается — тогда все по дате
+  const wanted = block.region ?? PHOTO_REPORTS_REGION;
+  const region = regions.some((g) => g.label === wanted) ? wanted : '';
   const items = photoReportsRegionFirst(all, region);
   const order = new Map(all.map((r, i) => [r.id, i]));
   const id = block.attrs?.id ?? 'otchety';

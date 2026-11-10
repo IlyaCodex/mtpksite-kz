@@ -79,6 +79,9 @@ export function sitePhotoReports(items: PhotoReport[]): PhotoReport[] {
 /** Регионы, которые в выборе идут одной строкой. */
 const REGION_GROUPS: Record<string, string[]> = { 'Москва и Московская область': ['Москва', 'Московская область'] };
 
+/** Регион, выбранный сразу, — если у блока поле region не задано (блоки, сохранённые до появления поля). */
+export const PHOTO_REPORTS_REGION = 'Москва и Московская область';
+
 export interface PhotoReportRegion {
   label: string;
   /** регионы отчётов под этой строкой выбора */

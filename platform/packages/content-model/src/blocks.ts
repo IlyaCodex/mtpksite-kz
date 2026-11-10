@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { attrs, code, crumb, element, href, image, inline, rich, svgIcon, text } from './fields.ts';
-import { photoReport } from './photo-reports.ts';
+import { PHOTO_REPORTS_REGION, photoReport } from './photo-reports.ts';
 
 /**
  * Блоки страниц. Страница сайта — упорядоченный список блоков; каждый блок
@@ -483,7 +483,7 @@ export const photoReportsBlock = z
     pageSize: z.number().int().min(4).max(24).default(8).describe('Карточек сразу и при каждой прокрутке до конца списка'),
     region: z
       .string()
-      .default('Москва и Московская область')
+      .default(PHOTO_REPORTS_REGION)
       .describe('Регион, выбранный сразу: его отчёты — первыми, затем остальные (пусто — «Все регионы», по дате)'),
     attrs: attrs(),
     /** заполняет контент-сервис при выводе страницы */
